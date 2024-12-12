@@ -2,6 +2,7 @@ from flask import Flask, jsonify
 import mysql.connector
 import csv
 from flask import request
+from werkzeug.utils import secure_filename  # Ασφαλής αποθήκευση αρχείων
 
 app = Flask(__name__)
 
@@ -37,17 +38,17 @@ def healthcheck():
         # Επιστροφή JSON με τα στατιστικά
         return jsonify({
             "status": "OK",
-            "dbconnection": "connected",
+            "dbconnection": "host=10.255.219.31;user=teamUser;password=dreamteam24;database=toll_management;port=3306",
             "n_stations": n_stations,
             "n_tags": n_tags,
             "n_passes": n_passes
-        })
+        }), 200
     except Exception as e:
         return jsonify({
             "status": "failed",
-            "dbconnection": "disconnected",
+            "dbconnection": "host=10.255.219.31;user=teamUser;password=dreamteam24;database=toll_management;port=3306",
             "error": str(e)
-        }), 500
+        }), 401
 
 @app.route('/admin/resetstations', methods=['POST'])
 def reset_stations():
@@ -74,7 +75,7 @@ def reset_stations():
 
         return jsonify({"status": "OK"})
     except Exception as e:
-        return jsonify({"status": "failed", "error": str(e)}), 500
+        return jsonify({"status": "failed", "info": str(e)}), 500
 
 @app.route('/admin/resetpasses', methods=['POST'])
 def reset_passes():
@@ -84,6 +85,13 @@ def reset_passes():
 
         # Διαγραφή όλων των διελεύσεων
         cursor.execute("DELETE FROM TollPasses")
+
+        cursor.execute("DELETE FROM Tags") 
+        cursor.execute("DELETE FROM Users")  # Διαγραφή χρηστών
+        cursor.execute(
+            "INSERT INTO Users (username, password) VALUES (%s, %s)",
+            ('admin', 'freepasses4all')
+        )
 
         conn.commit()
         cursor.close()
@@ -96,18 +104,34 @@ def reset_passes():
 @app.route('/admin/addpasses', methods=['POST'])
 def add_passes():
     try:
+        if 'file' not in request.files:
+            return jsonify({"status": "failed", "info": "No file part in the request"}), 400
+        file = request.files['file']
+
+        if file.filename == '':
+            return jsonify({"status": "failed", "info": "No file selected"}), 400
+
+        # Ασφαλής αποθήκευση του αρχείου
+        filename = secure_filename(file.filename)
+        file.save(filename)
+
         conn = get_db_connection()
         cursor = conn.cursor()
 
-        # Έλεγχος ύπαρξης του αρχείου CSV
-        csv_file = 'passes.csv'  # Όνομα αρχείου
-        with open(csv_file, mode='r', encoding='utf-8') as file:
-            csv_reader = csv.reader(file)
-            next(csv_reader)  # Παράκαμψη της πρώτης γραμμής (headers)
+# Ανάγνωση και εισαγωγή δεδομένων από το CSV
+        with open(filename, mode='r', encoding='utf-8') as csvfile:
+            csv_reader = csv.reader(csvfile)
+            next(csv_reader)  # Παράκαμψη headers
             for row in csv_reader:
                 cursor.execute(
                     "INSERT INTO TollPasses (timestamp, tollID, tagRef, tagHomeID, charge) VALUES (%s, %s, %s, %s, %s)",
                     (row[0], row[1], row[2], row[3], row[4])
+                )
+
+                # Αν υπάρχει πίνακας Tags, εισάγουμε δεδομένα
+                cursor.execute(
+                    "INSERT INTO Tags (tagID, tagProvider) VALUES (%s, %s) ON DUPLICATE KEY UPDATE tagID=tagID",
+                    (row[2], row[3])  # το φτιαχνουμε αναλογα με τις στηλες του csv
                 )
 
         conn.commit()
@@ -116,7 +140,7 @@ def add_passes():
 
         return jsonify({"status": "OK"})
     except Exception as e:
-        return jsonify({"status": "failed", "error": str(e)}), 500
+        return jsonify({"status": "failed", "info": str(e)}), 500
 
 
 # Εκκίνηση της εφαρμογής
