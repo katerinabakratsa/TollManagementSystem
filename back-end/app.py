@@ -76,6 +76,48 @@ def reset_stations():
     except Exception as e:
         return jsonify({"status": "failed", "error": str(e)}), 500
 
+@app.route('/admin/resetpasses', methods=['POST'])
+def reset_passes():
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        # Διαγραφή όλων των διελεύσεων
+        cursor.execute("DELETE FROM TollPasses")
+
+        conn.commit()
+        cursor.close()
+        conn.close()
+
+        return jsonify({"status": "OK"})
+    except Exception as e:
+        return jsonify({"status": "failed", "error": str(e)}), 500
+
+@app.route('/admin/addpasses', methods=['POST'])
+def add_passes():
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        # Έλεγχος ύπαρξης του αρχείου CSV
+        csv_file = 'passes.csv'  # Όνομα αρχείου
+        with open(csv_file, mode='r', encoding='utf-8') as file:
+            csv_reader = csv.reader(file)
+            next(csv_reader)  # Παράκαμψη της πρώτης γραμμής (headers)
+            for row in csv_reader:
+                cursor.execute(
+                    "INSERT INTO TollPasses (timestamp, tollID, tagRef, tagHomeID, charge) VALUES (%s, %s, %s, %s, %s)",
+                    (row[0], row[1], row[2], row[3], row[4])
+                )
+
+        conn.commit()
+        cursor.close()
+        conn.close()
+
+        return jsonify({"status": "OK"})
+    except Exception as e:
+        return jsonify({"status": "failed", "error": str(e)}), 500
+
 
 # Εκκίνηση της εφαρμογής
 if __name__ == '__main__':
