@@ -1,0 +1,76 @@
+{
+  "info": {
+    "name": "Toll Management API",
+    "description": "Postman collection for Toll Management REST API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Healthcheck",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "https://localhost:9115/api/admin/healthcheck",
+          "protocol": "https",
+          "host": ["localhost:9115"],
+          "path": ["api", "admin", "healthcheck"]
+        }
+      }
+    },
+    {
+      "name": "Reset Toll Stations",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "https://localhost:9115/api/admin/resetstations",
+          "protocol": "https",
+          "host": ["localhost:9115"],
+          "path": ["api", "admin", "resetstations"]
+        }
+      }
+    },
+    {
+      "name": "Reset Toll Passes",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "https://localhost:9115/api/admin/resetpasses",
+          "protocol": "https",
+          "host": ["localhost:9115"],
+          "path": ["api", "admin", "resetpasses"]
+        }
+      }
+    },
+    {
+      "name": "Add Toll Passes",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "multipart/form-data"
+          }
+        ],
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {
+              "key": "file",
+              "type": "file",
+              "src": "passes.csv"
+            }
+          ]
+        },
+        "url": {
+          "raw": "https://localhost:9115/api/admin/addpasses",
+          "protocol": "https",
+          "host": ["localhost:9115"],
+          "path": ["api", "admin", "addpasses"]
+        }
+      }
+    }
+  ]
+}
