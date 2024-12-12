@@ -1,7 +1,7 @@
-from flask import Flask, jsonify
+from flask import Flask, jsonify, request, make_response
 import mysql.connector
 import csv
-from flask import request
+import uuid
 from werkzeug.utils import secure_filename  # Ασφαλής αποθήκευση αρχείων
 
 app = Flask(__name__)
@@ -13,20 +13,80 @@ def get_db_connection():
         user="teamUser",       # Username της MySQL
         password="dreamteam24",   # Password της MySQL
         database="toll_management",  # Όνομα της βάσης
-        port=3306 
+        port=3306
     )
 
-@app.route('/admin/healthcheck', methods=['GET'])
+# Token storage for simplicity (in-memory, should use a DB in production)
+tokens = {}
+
+# Helper για μορφή JSON/CSV
+def format_response(data, format_type):
+    if format_type == "csv":
+        if not isinstance(data, list) or len(data) == 0:
+            return make_response("No data to return", 204)
+        csv_data = ",".join(data[0].keys()) + "\n"  # Headers
+        for row in data:
+            csv_data += ",".join(map(str, row.values())) + "\n"
+        response = make_response(csv_data)
+        response.headers["Content-Type"] = "text/csv"
+        return response
+    return jsonify(data)
+
+# /login
+@app.route('/api/login', methods=['POST'])
+def login():
+    try:
+        username = request.form.get('username')
+        password = request.form.get('password')
+
+        if not username or not password:
+            return jsonify({"status": "failed", "info": "Missing username or password"}), 400
+
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+
+        cursor.execute("SELECT * FROM Users WHERE username = %s AND password = %s", (username, password))
+        user = cursor.fetchone()
+
+        cursor.close()
+        conn.close()
+
+        if not user:
+            return jsonify({"status": "failed", "info": "Invalid credentials"}), 401
+
+        token = str(uuid.uuid4())
+        tokens[token] = username
+
+        return jsonify({"status": "OK", "token": token}), 200
+    except Exception as e:
+        return jsonify({"status": "failed", "info": str(e)}), 500
+
+# /logout
+@app.route('/api/logout', methods=['POST'])
+def logout():
+    try:
+        token = request.headers.get('X-OBSERVATORY-AUTH')
+
+        if not token or token not in tokens:
+            return jsonify({"status": "failed", "info": "Invalid or missing token"}), 401
+
+        del tokens[token]
+
+        return '', 200
+    except Exception as e:
+        return jsonify({"status": "failed", "info": str(e)}), 500
+
+# /admin/healthcheck
+@app.route('/api/admin/healthcheck', methods=['GET'])
 def healthcheck():
     try:
         conn = get_db_connection()
         cursor = conn.cursor(dictionary=True)
 
-        # Ερωτήματα για συλλογή στατιστικών
         cursor.execute("SELECT COUNT(*) as n_stations FROM TollStations")
         n_stations = cursor.fetchone()["n_stations"]
 
-        cursor.execute("SELECT COUNT(*) as n_tags FROM TollPasses")
+        cursor.execute("SELECT COUNT(*) as n_tags FROM Tags")
         n_tags = cursor.fetchone()["n_tags"]
 
         cursor.execute("SELECT COUNT(*) as n_passes FROM TollPasses")
@@ -35,31 +95,35 @@ def healthcheck():
         cursor.close()
         conn.close()
 
-        # Επιστροφή JSON με τα στατιστικά
-        return jsonify({
+        if n_stations == 0 and n_tags == 0 and n_passes == 0:
+            return '', 204  # No content
+
+        format_type = request.args.get("format", "json")
+        data = {
             "status": "OK",
-            "dbconnection": "host=10.255.219.31;user=teamUser;password=dreamteam24;database=toll_management;port=3306",
+            "dbconnection": "connected",
             "n_stations": n_stations,
             "n_tags": n_tags,
             "n_passes": n_passes
-        }), 200
+        }
+        return format_response([data], format_type)
+
     except Exception as e:
         return jsonify({
             "status": "failed",
-            "dbconnection": "host=10.255.219.31;user=teamUser;password=dreamteam24;database=toll_management;port=3306",
+            "dbconnection": "disconnected",
             "error": str(e)
-        }), 401
+        }), 500
 
-@app.route('/admin/resetstations', methods=['POST'])
+# /admin/resetstations
+@app.route('/api/admin/resetstations', methods=['POST'])
 def reset_stations():
     try:
         conn = get_db_connection()
         cursor = conn.cursor()
 
-        # Διαγραφή όλων των σταθμών
         cursor.execute("DELETE FROM TollStations")
 
-        # Αρχικοποίηση από το αρχείο CSV
         with open('tollstations2024.csv', mode='r', encoding='utf-8') as file:
             csv_reader = csv.reader(file)
             next(csv_reader)  # Παράκαμψη της πρώτης γραμμής (headers)
@@ -73,21 +137,25 @@ def reset_stations():
         cursor.close()
         conn.close()
 
-        return jsonify({"status": "OK"})
+        return jsonify({"status": "OK"}), 200
+    except FileNotFoundError:
+        return jsonify({"status": "failed", "info": "CSV file not found"}), 400
     except Exception as e:
         return jsonify({"status": "failed", "info": str(e)}), 500
 
-@app.route('/admin/resetpasses', methods=['POST'])
+# /admin/resetpasses
+@app.route('/api/admin/resetpasses', methods=['POST'])
 def reset_passes():
     try:
+        if not request.headers.get("Authorization"):
+            return jsonify({"status": "failed", "info": "Missing Authorization header"}), 401
+
         conn = get_db_connection()
         cursor = conn.cursor()
 
-        # Διαγραφή όλων των διελεύσεων
         cursor.execute("DELETE FROM TollPasses")
-
-        cursor.execute("DELETE FROM Tags") 
-        cursor.execute("DELETE FROM Users")  # Διαγραφή χρηστών
+        cursor.execute("DELETE FROM Tags")
+        cursor.execute("DELETE FROM Users")
         cursor.execute(
             "INSERT INTO Users (username, password) VALUES (%s, %s)",
             ('admin', 'freepasses4all')
@@ -97,28 +165,27 @@ def reset_passes():
         cursor.close()
         conn.close()
 
-        return jsonify({"status": "OK"})
+        return jsonify({"status": "OK"}), 200
     except Exception as e:
-        return jsonify({"status": "failed", "error": str(e)}), 500
+        return jsonify({"status": "failed", "info": str(e)}), 500
 
-@app.route('/admin/addpasses', methods=['POST'])
+# /admin/addpasses
+@app.route('/api/admin/addpasses', methods=['POST'])
 def add_passes():
     try:
         if 'file' not in request.files:
             return jsonify({"status": "failed", "info": "No file part in the request"}), 400
-        file = request.files['file']
 
+        file = request.files['file']
         if file.filename == '':
             return jsonify({"status": "failed", "info": "No file selected"}), 400
 
-        # Ασφαλής αποθήκευση του αρχείου
         filename = secure_filename(file.filename)
         file.save(filename)
 
         conn = get_db_connection()
         cursor = conn.cursor()
 
-# Ανάγνωση και εισαγωγή δεδομένων από το CSV
         with open(filename, mode='r', encoding='utf-8') as csvfile:
             csv_reader = csv.reader(csvfile)
             next(csv_reader)  # Παράκαμψη headers
@@ -127,21 +194,20 @@ def add_passes():
                     "INSERT INTO TollPasses (timestamp, tollID, tagRef, tagHomeID, charge) VALUES (%s, %s, %s, %s, %s)",
                     (row[0], row[1], row[2], row[3], row[4])
                 )
-
-                # Αν υπάρχει πίνακας Tags, εισάγουμε δεδομένα
                 cursor.execute(
-                    "INSERT INTO Tags (tagID, tagProvider) VALUES (%s, %s) ON DUPLICATE KEY UPDATE tagID=tagID",
-                    (row[2], row[3])  # το φτιαχνουμε αναλογα με τις στηλες του csv
+                    "INSERT INTO Tags (tagID, tagProvider) VALUES (%s, %s) ON DUPLICATE KEY UPDATE tagProvider=VALUES(tagProvider)",
+                    (row[2], row[3])
                 )
 
         conn.commit()
         cursor.close()
         conn.close()
 
-        return jsonify({"status": "OK"})
+        return jsonify({"status": "OK"}), 200
+    except FileNotFoundError:
+        return jsonify({"status": "failed", "info": "File not found"}), 400
     except Exception as e:
         return jsonify({"status": "failed", "info": str(e)}), 500
-
 
 # Εκκίνηση της εφαρμογής
 if __name__ == '__main__':
