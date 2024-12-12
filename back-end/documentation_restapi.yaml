@@ -1,0 +1,163 @@
+openapi: 3.0.0
+info:
+  title: Toll Management API
+  description: REST API for managing toll station interoperability and passes.
+  version: 1.0.0
+servers:
+  - url: https://localhost:9115/api
+    description: Local server
+
+paths:
+  /admin/healthcheck:
+    get:
+      summary: Check database health
+      description: Returns the status of the database connection and basic statistics.
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: OK
+                  dbconnection:
+                    type: string
+                    example: connected
+                  n_stations:
+                    type: integer
+                    example: 10
+                  n_tags:
+                    type: integer
+                    example: 100
+                  n_passes:
+                    type: integer
+                    example: 500
+        '401':
+          description: Unauthorized access
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: failed
+                  dbconnection:
+                    type: string
+                    example: disconnected
+                  error:
+                    type: string
+                    example: Unauthorized access
+
+  /admin/resetstations:
+    post:
+      summary: Reset toll stations
+      description: Deletes all toll stations and initializes the table with data from a CSV file.
+      responses:
+        '200':
+          description: Stations reset successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: OK
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: failed
+                  info:
+                    type: string
+                    example: Error message describing the issue
+
+  /admin/resetpasses:
+    post:
+      summary: Reset toll passes
+      description: Deletes all toll passes and initializes related data (e.g., users and tags).
+      responses:
+        '200':
+          description: Passes reset successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: OK
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: failed
+                  error:
+                    type: string
+                    example: Error message describing the issue
+
+  /admin/addpasses:
+    post:
+      summary: Add toll passes
+      description: Adds toll pass records from a CSV file uploaded as multipart/form-data.
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              properties:
+                file:
+                  type: string
+                  format: binary
+                  description: The CSV file containing toll pass records
+      responses:
+        '200':
+          description: Passes added successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: OK
+        '400':
+          description: Bad request
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: failed
+                  info:
+                    type: string
+                    example: No file selected
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: failed
+                  info:
+                    type: string
+                    example: Error message describing the issue
