@@ -1,4 +1,4 @@
-﻿OpID,Operator,TollID,Name,PM,Locality,Road,Lat,Long,Email,Price1,Price2,Price3,Price4
+OpID,Operator,TollID,Name,PM,Locality,Road,Latitude,Longitude,Email,Price1,Price2,Price3,Price4
 AM,aegeanmotorway,AM01,Σταθμός Διοδίων Κλειδίου Μετωπικά (Προς Αθήνα),ΜΤ,Ημαθίας-Κλειδί,Α/Δ Αθηνών-Θεσσαλονίκης,40.51974,22.57247,customercare@aegeanmotorway.gr,1.40,2.00,5.90,8.30
 AM,aegeanmotorway,AM02,Σταθμός Διοδίων Κλειδίου Μετωπικά (Προς Θεσσαλονίκη),ΜΤ,Ημαθίας-Κλειδί,Α/Δ Αθηνών-Θεσσαλονίκης,40.51943,22.57290,customercare@aegeanmotorway.gr,1.40,2.00,5.90,8.30
 AM,aegeanmotorway,AM03,Σταθμός Διοδίων Μακρυχωρίου Μετωπικά (Προς Αθήνα),ΜΤ,Λάρισας-Μακρυχώρι,Α/Δ Αθηνών-Θεσσαλονίκης,39.80461,22.50252,customercare@aegeanmotorway.gr,1.60,2.20,6.80,9.60
