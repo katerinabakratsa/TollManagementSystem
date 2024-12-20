@@ -13,11 +13,7 @@ def get_db_connection():
         user="root",       # Username της MySQL
         password="alexandra",   # Password της MySQL
         database="toll_management",  # Όνομα της βάσης
-<<<<<<< HEAD
-        port=3306
-=======
         charset="utf8mb4" 
->>>>>>> cc26cec (Description of changes made in restapi_feature)
     )
 
 # Token storage for simplicity (in-memory, should use a DB in production)
@@ -87,17 +83,10 @@ def healthcheck():
         conn = get_db_connection()
         cursor = conn.cursor(dictionary=True)
 
-<<<<<<< HEAD
         cursor.execute("SELECT COUNT(*) as n_stations FROM TollStations")
         n_stations = cursor.fetchone()["n_stations"]
 
         cursor.execute("SELECT COUNT(*) as n_tags FROM Tags")
-=======
-        cursor.execute("SELECT COUNT(*) as n_stations FROM tollStations")
-        n_stations = cursor.fetchone()["n_stations"]
-
-        cursor.execute("SELECT COUNT(DISTINCT tagRef) as n_tags FROM tollPasses")
->>>>>>> cc26cec (Description of changes made in restapi_feature)
         n_tags = cursor.fetchone()["n_tags"]
 
         cursor.execute("SELECT COUNT(*) as n_passes FROM tollPasses")
@@ -133,20 +122,12 @@ def reset_stations():
         conn = get_db_connection()
         cursor = conn.cursor()
 
-<<<<<<< HEAD
-        cursor.execute("DELETE FROM TollStations")
-=======
-        cursor.execute("DELETE FROM tollStations")
->>>>>>> cc26cec (Description of changes made in restapi_feature)
+        cursor.execute("DELETE FROM tollstations")
 
         with open('tollstations2024.csv', mode='r', encoding='utf-8') as file:
             csv_reader = csv.reader(file)
             next(csv_reader)  # Παράκαμψη της πρώτης γραμμής (headers)
             for row in csv_reader:
-                query = (
-                    "INSERT INTO tollStations (OpID, Operator, TollID, Name, PM, Locality, Road, Latitude, Longitude, Email, Price1, Price2, Price3, Price4) "
-                    "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)"
-                ),
                 cursor.execute(
                     "INSERT INTO tollStations (OpID, Operator, TollID, Name, PM, Locality, Road, Latitude, Longitude, Email, Price1, Price2, Price3, Price4) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
                     (row[0], row[1], row[2], row[3], row[4], row[5], row[6], row[7], row[8], row[9], row[10], row[11], row[12], row[13])
@@ -172,12 +153,7 @@ def reset_passes():
         conn = get_db_connection()
         cursor = conn.cursor()
 
-<<<<<<< HEAD
-        cursor.execute("DELETE FROM TollPasses")
-        cursor.execute("DELETE FROM Tags")
-=======
         cursor.execute("DELETE FROM tollPasses")
->>>>>>> cc26cec (Description of changes made in restapi_feature)
         cursor.execute("DELETE FROM Users")
         cursor.execute(
             "INSERT INTO Users (username, password) VALUES (%s, %s)",
@@ -217,13 +193,6 @@ def add_passes():
                     "INSERT INTO tollPasses (timestamp, tollID, tagRef, tagHomeID, charge) VALUES (%s, %s, %s, %s, %s)",
                     (row[0], row[1], row[2], row[3], row[4])
                 )
-<<<<<<< HEAD
-                cursor.execute(
-                    "INSERT INTO Tags (tagID, tagProvider) VALUES (%s, %s) ON DUPLICATE KEY UPDATE tagProvider=VALUES(tagProvider)",
-                    (row[2], row[3])
-                )
-=======
->>>>>>> cc26cec (Description of changes made in restapi_feature)
 
         conn.commit()
         cursor.close()
