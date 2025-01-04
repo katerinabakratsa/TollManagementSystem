@@ -20,9 +20,8 @@ def enforce_https():
 def get_db_connection():
     return mysql.connector.connect(
         host="localhost",  # Δημόσια IP της βάσης
-        port=3006,
         user="root",       # Username της MySQL
-        password="Ddffgg456",   # Password της MySQL
+        password="alexandra",   # Password της MySQL
         database="toll_management",  # Όνομα της βάσης
         charset="utf8mb4"
     )
@@ -36,15 +35,40 @@ tokens = {}
 def format_response(data, format_type):
     if format_type == "csv":
         if not isinstance(data, list) or len(data) == 0:
-            return make_response("No data to return", 204)
+            # Επιστροφή μόνο headers όταν δεν υπάρχουν δεδομένα
+            headers = "No data available\n" if not isinstance(data, list) else ",".join(data[0].keys()) + "\n"
+            response = make_response(headers)
+            response.headers["Content-Type"] = "text/csv"
+            return response
+
+        # Δημιουργία CSV δεδομένων
         csv_data = ",".join(data[0].keys()) + "\n"  # Headers
         for row in data:
             csv_data += ",".join(map(str, row.values())) + "\n"
         response = make_response(csv_data)
         response.headers["Content-Type"] = "text/csv"
         return response
+    
+    # JSON Επιστροφή
     return jsonify(data)
 
+@app.route('/api/admin/users', methods=['GET'])
+def get_users():
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+
+        # Ανάκτηση χρηστών από τη βάση δεδομένων
+        cursor.execute("SELECT id, username FROM Users")
+        users = cursor.fetchall()
+
+        cursor.close()
+        conn.close()
+
+        # Επιστροφή της λίστας χρηστών
+        return jsonify(users), 200
+    except Exception as e:
+        return jsonify({"status": "failed", "info": str(e)}), 500
 
 # /login
 @app.route('/api/login', methods=['POST'])
@@ -328,17 +352,7 @@ def get_station_passes(stationID, from_date, to_date):
             pass_type = "Home" if p['tagHomeID'] == station_opid else "Visitor"
             
             
-                    # Δημιουργία απάντησης
-            response = {
-             "stationID": stationID,
-             "stationOperator": station_operator,
-             "requestTimestamp": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
-             "periodFrom": from_date_formatted,
-             "periodTo": to_date_formatted,
-             "nPasses": len(pass_list),
-             "passList": pass_list
-            }
-
+            
             # Δημιουργία εγγραφής για κάθε διέλευση
             pass_list.append(OrderedDict([
                 ("passIndex", index),
@@ -350,7 +364,16 @@ def get_station_passes(stationID, from_date, to_date):
                 ("passCharge", p['charge'])
             ]))
 
-
+        # Δημιουργία απάντησης
+        response = {
+            "stationID": stationID,
+            "stationOperator": station_operator,
+            "requestTimestamp": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+            "periodFrom": from_date_formatted,
+            "periodTo": to_date_formatted,
+            "nPasses": len(pass_list),
+            "passList": pass_list
+        }
 
         # Επιστροφή αποτελέσματος στην επιθυμητή μορφή
         format_type = request.args.get("format", "json")
@@ -409,24 +432,23 @@ def pass_analysis(stationOpID, tagOpID, from_date, to_date):
         
        
 
-        # Ανάκτηση διελεύσεων
         cursor.execute("""
-           SELECT 
-            p.timestamp,
-            p.tagRef AS tagID,
-            p.tollID AS stationID,
-            p.charge AS passCharge
-        FROM tollPasses p
-        INNER JOIN tollStations s ON p.tollID = s.TollID
-        WHERE p.tagHomeID = %s 
-        AND s.OpID = %s
-        AND DATE(p.timestamp) BETWEEN %s AND %s
-        ORDER BY p.timestamp ASC
+            SELECT 
+                p.timestamp,
+                p.tagRef AS tagID,
+                p.tollID AS stationID,
+                p.charge AS passCharge
+            FROM tollPasses p
+            INNER JOIN tollStations s ON p.tollID = s.TollID
+            WHERE p.tagHomeID = %s 
+            AND s.OpID = %s
+            AND DATE(p.timestamp) BETWEEN %s AND %s
+            ORDER BY p.timestamp ASC
         """, (tagOpID, stationOpID, from_date_formatted, to_date_formatted))
-
-
         
         passes = cursor.fetchall()
+        
+        
         pass_list = []
 
         # Δημιουργία λίστας διελεύσεων
@@ -475,10 +497,6 @@ def pass_analysis(stationOpID, tagOpID, from_date, to_date):
         cursor.close()
         conn.close()
 
-
-
 # Εκκίνηση της εφαρμογής
 if __name__ == '__main__':
-    app.run(port=9115,ssl_context=('cert.pem', 'key.pem'))
-
-
+    app.run(port=9115,ssl_context=('new_cert.pem', 'new_key.pem'))
