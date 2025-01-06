@@ -281,9 +281,12 @@ def add_passes():
         return jsonify({"status": "failed", "info": "File not found"}), 400
     except Exception as e:
         return jsonify({"status": "failed", "info": str(e)}), 500
+        
 
 @app.route('/api/tollStationPasses/tollStationID/<stationID>/date_from/<from_date>/date_to/<to_date>', methods=['GET'])
 def get_station_passes(stationID, from_date, to_date):
+    conn = None
+    cursor = None
     try:
         # Έλεγχος μορφής ημερομηνιών (YYYYMMDD)
         if not (len(from_date) == 8 and len(to_date) == 8 and 
@@ -306,6 +309,7 @@ def get_station_passes(stationID, from_date, to_date):
                 "info": "Invalid date values"
             }), 400
 
+        # Σύνδεση με βάση
         conn = get_db_connection()
         cursor = conn.cursor(dictionary=True)
 
@@ -339,27 +343,19 @@ def get_station_passes(stationID, from_date, to_date):
         
         passes = cursor.fetchall()
         pass_list = []
-        
-        
 
         # Δημιουργία λίστας διελεύσεων
         for index, p in enumerate(passes, start=1):
-            # Δημιουργία passID από timestamp και tollID
             timestamp_str = p['timestamp'].strftime('%Y%m%d%H%M%S')
             pass_id = f"{timestamp_str}_{stationID}"
-
-            # Υπολογισμός passType
             pass_type = "Home" if p['tagHomeID'] == station_opid else "Visitor"
             
-            
-            
-            # Δημιουργία εγγραφής για κάθε διέλευση
             pass_list.append(OrderedDict([
                 ("passIndex", index),
                 ("passID", pass_id),
                 ("timestamp", p['timestamp'].strftime('%Y-%m-%d %H:%M:%S')),
                 ("tagID", p['tagID']),
-                ("tagProvider", p['tagHomeID']),  # tagProvider = tagHomeID
+                ("tagProvider", p['tagHomeID']),
                 ("passType", pass_type),
                 ("passCharge", p['charge'])
             ]))
@@ -375,64 +371,70 @@ def get_station_passes(stationID, from_date, to_date):
             "passList": pass_list
         }
 
-        # Επιστροφή αποτελέσματος στην επιθυμητή μορφή
-        format_type = request.args.get("format", "json")
-        return format_response([response], format_type)
+        return jsonify(response), 200
 
     except Exception as e:
         return jsonify({
             "status": "failed",
             "info": str(e)
         }), 500
+
     finally:
-        cursor.close()
-        conn.close()
+        if cursor is not None:
+            cursor.close()
+        if conn is not None:
+            conn.close()
 
 
 @app.route('/api/passAnalysis/stationOpID/<stationOpID>/tagOpID/<tagOpID>/date_from/<from_date>/date_to/<to_date>', methods=['GET'])
 def pass_analysis(stationOpID, tagOpID, from_date, to_date):
-   
+    """
+    Ανάλυση διελεύσεων μεταξύ operators:
+    Επιστρέφει λίστα με αναλυτικά στοιχεία για διελεύσεις (passList), όταν ένα tag που ανήκει σε έναν
+    συγκεκριμένο operator (tagOpID) περνάει από σταθμούς που ανήκουν σε άλλον operator (stationOpID).
+    """
+
+    conn = None
+    cursor = None
+    
     try:
-        # Έλεγχος μορφής ημερομηνιών (YYYYMMDD)
-        if not (len(from_date) == 8 and len(to_date) == 8 and 
-                from_date.isdigit() and to_date.isdigit()):
+        # 1. Έλεγχος μορφής ημερομηνιών (YYYYMMDD)
+        if not (len(from_date) == 8 and len(to_date) == 8 and from_date.isdigit() and to_date.isdigit()):
             return jsonify({
                 "status": "failed",
                 "info": "Invalid date format. Use YYYYMMDD"
             }), 400
 
-       
-        # Μετατροπή ημερομηνιών σε κατάλληλη μορφή
+        # 2. Μετατροπή ημερομηνιών σε datetime objects
         from datetime import datetime
         try:
             from_date_obj = datetime.strptime(from_date, '%Y%m%d')
             to_date_obj = datetime.strptime(to_date, '%Y%m%d')
-            from_date_formatted = from_date_obj.strftime('%Y-%m-%d')
-            to_date_formatted = to_date_obj.strftime('%Y-%m-%d')
         except ValueError:
             return jsonify({
                 "status": "failed",
-                "info": "Invalid date values"
+                "info": "Invalid date values. Use YYYYMMDD"
             }), 400
 
+        # 3. Φιλική μορφή ημερομηνιών για χρήση στα SQL queries
+        from_date_formatted = from_date_obj.strftime('%Y-%m-%d')
+        to_date_formatted = to_date_obj.strftime('%Y-%m-%d')
+
+        # 4. Σύνδεση με τη βάση
         conn = get_db_connection()
         cursor = conn.cursor(dictionary=True)
 
-        # Έλεγχος αν υπάρχει ο operator του σταθμού στον πίνακα tollStations
-        cursor.execute(
-            "SELECT 1 FROM tollStations WHERE OpID = %s",
-            (stationOpID,)
-        )
-        station = cursor.fetchone()
-        if not station:
+        # 5. Έλεγχος αν υπάρχει ο operator του σταθμού (stationOpID) στον πίνακα tollStations με LIMIT 1
+        cursor.execute("SELECT 1 FROM tollStations WHERE OpID = %s LIMIT 1", (stationOpID,))
+        station_op_found = cursor.fetchone()
+        if not station_op_found:
             return jsonify({
                 "status": "failed",
-                "info": "Station operator not found"
+                "info": f"Station operator with OpID={stationOpID} not found"
             }), 404
-        
-       
 
-        cursor.execute("""
+        # 6. Ερώτημα για τις διελεύσεις
+        query = """
             SELECT 
                 p.timestamp,
                 p.tagRef AS tagID,
@@ -440,62 +442,209 @@ def pass_analysis(stationOpID, tagOpID, from_date, to_date):
                 p.charge AS passCharge
             FROM tollPasses p
             INNER JOIN tollStations s ON p.tollID = s.TollID
-            WHERE p.tagHomeID = %s 
-            AND s.OpID = %s
-            AND DATE(p.timestamp) BETWEEN %s AND %s
+            WHERE s.OpID = %s         -- operator του σταθμού
+              AND p.tagHomeID = %s    -- operator του tag
+              AND DATE(p.timestamp) BETWEEN %s AND %s
             ORDER BY p.timestamp ASC
-        """, (tagOpID, stationOpID, from_date_formatted, to_date_formatted))
-        
+        """
+        cursor.execute(query, (stationOpID, tagOpID, from_date_formatted, to_date_formatted))
         passes = cursor.fetchall()
-        
-        
-        pass_list = []
 
-        # Δημιουργία λίστας διελεύσεων
+        # 7. Δημιουργία passList με passIndex, passID κλπ.
+        pass_list = []
         for index, p in enumerate(passes, start=1):
-            # Δημιουργία passID από timestamp και stationID
+            # passID: συνδυασμός timestamp + stationID
             timestamp_str = p['timestamp'].strftime('%Y%m%d%H%M%S')
             pass_id = f"{timestamp_str}_{p['stationID']}"
 
-            # Δημιουργία εγγραφής για κάθε διέλευση
             pass_list.append({
-                "passIndex": index,
-                "passID": pass_id,
-                "stationID": p['stationID'],
-                "timestamp": p['timestamp'].strftime('%Y-%m-%d %H:%M:%S'),
-                "tagID": p['tagID'],
-                "passCharge": float(p['passCharge'])
+                "passIndex":   index,
+                "passID":      pass_id,
+                "stationID":   p['stationID'],
+                "timestamp":   p['timestamp'].strftime('%Y-%m-%d %H:%M:%S'),
+                "tagID":       p['tagID'],
+                "passCharge":  float(p['passCharge'])
             })
 
-
-        # Δημιουργία απάντησης
+        # 8. Δημιουργία τελικού JSON αντικειμένου
         response = {
-            "stationOpID": stationOpID,
-            "tagOpID": tagOpID,
+            "stationOpID":      stationOpID,
+            "tagOpID":          tagOpID,
             "requestTimestamp": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
-            "periodFrom": from_date_formatted,
-            "periodTo": to_date_formatted,
-            "nPasses": len(pass_list),
-            "passList": pass_list
+            "periodFrom":       from_date_formatted,
+            "periodTo":         to_date_formatted,
+            "nPasses":          len(pass_list),
+            "passList":         pass_list
         }
 
-        # Επιστροφή αποτελέσματος στην επιθυμητή μορφή
+        # Προαιρετικά: format (JSON / CSV)
         format_type = request.args.get("format", "json")
         return format_response([response], format_type)
-    
-    
 
     except Exception as e:
         return jsonify({
             "status": "failed",
             "info": str(e)
         }), 500
-    
-    
 
     finally:
-        cursor.close()
-        conn.close()
+        if cursor is not None:
+            cursor.close()
+        if conn is not None:
+            conn.close()
+
+
+
+
+
+@app.route('/api/passesCost/tollOpID/<tollOpID>/tagOpID/<tagOpID>/date_from/<from_date>/date_to/<to_date>', methods=['GET'])
+def passes_cost(tollOpID, tagOpID, from_date, to_date):
+    # Ορίζουμε από την αρχή None
+    conn = None
+    cursor = None
+    
+    try:
+        # Έλεγχος μορφής ημερομηνιών (YYYYMMDD)
+        if not (len(from_date) == 8 and len(to_date) == 8 and from_date.isdigit() and to_date.isdigit()):
+            return jsonify({
+                "status": "failed",
+                "info": "Invalid date format. Use YYYYMMDD"
+            }), 400
+        
+        from datetime import datetime
+        try:
+            from_date_obj = datetime.strptime(from_date, '%Y%m%d')
+            to_date_obj = datetime.strptime(to_date, '%Y%m%d')
+        except ValueError:
+            return jsonify({
+                "status": "failed",
+                "info": "Invalid date values. Use YYYYMMDD"
+            }), 400
+        
+        from_date_formatted = from_date_obj.strftime('%Y-%m-%d')
+        to_date_formatted = to_date_obj.strftime('%Y-%m-%d')
+
+        # Σύνδεση με τη βάση δεδομένων
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+
+        # Υπολογισμός διελεύσεων και κόστους
+        cursor.execute("""
+            SELECT COUNT(*) AS nPasses, COALESCE(SUM(p.charge), 0) AS passesCost
+            FROM tollPasses p
+            INNER JOIN tollStations s ON p.tollID = s.TollID
+            WHERE s.OpID = %s
+              AND p.tagHomeID = %s
+              AND DATE(p.timestamp) BETWEEN %s AND %s
+        """, (tollOpID, tagOpID, from_date_formatted, to_date_formatted))
+
+        result = cursor.fetchone()
+
+        response = {
+            "tollOpID": tollOpID,
+            "tagOpID": tagOpID,
+            "requestTimestamp": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+            "periodFrom": from_date_formatted,
+            "periodTo": to_date_formatted,
+            "nPasses": result["nPasses"],
+            "passesCost": float(result["passesCost"])
+        }
+
+        return jsonify(response), 200
+
+    except Exception as e:
+        return jsonify({
+            "status": "failed",
+            "info": str(e)
+        }), 500
+
+    finally:
+        if cursor is not None:
+            cursor.close()
+        if conn is not None:
+            conn.close()
+
+
+@app.route('/api/chargesBy/tollOpID/<tollOpID>/date_from/<from_date>/date_to/<to_date>', methods=['GET'])
+def charges_by(tollOpID, from_date, to_date):
+    conn = None
+    cursor = None
+    try:
+        # Έλεγχος μορφής ημερομηνιών
+        if not (len(from_date) == 8 and len(to_date) == 8 and from_date.isdigit() and to_date.isdigit()):
+            return jsonify({
+                "status": "failed",
+                "info": "Invalid date format. Use YYYYMMDD"
+            }), 400
+
+        from datetime import datetime
+        try:
+            from_date_obj = datetime.strptime(from_date, '%Y%m%d')
+            to_date_obj = datetime.strptime(to_date, '%Y%m%d')
+        except ValueError:
+            return jsonify({
+                "status": "failed",
+                "info": "Invalid date values. Use YYYYMMDD"
+            }), 400
+
+        from_date_formatted = from_date_obj.strftime('%Y-%m-%d')
+        to_date_formatted = to_date_obj.strftime('%Y-%m-%d')
+
+        # Σύνδεση με τη βάση
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+
+        # Ερώτημα SQL για visiting operators
+        cursor.execute("""
+            SELECT
+                p.tagHomeID AS visitingOpID,
+                COUNT(*) AS nPasses,
+                COALESCE(SUM(p.charge), 0) AS passesCost
+            FROM tollPasses p
+            INNER JOIN tollStations s ON p.tollID = s.TollID
+            WHERE s.OpID = %s
+              AND p.tagHomeID != %s
+              AND DATE(p.timestamp) BETWEEN %s AND %s
+            GROUP BY p.tagHomeID
+        """, (tollOpID, tollOpID, from_date_formatted, to_date_formatted))
+
+        # Ανάκτηση αποτελεσμάτων
+        rows = cursor.fetchall()  # Αυτό διασφαλίζει ότι όλα τα αποτελέσματα ανακτώνται
+
+        # Δημιουργία λίστας visiting operators
+        vOpList = [
+            {
+                "visitingOpID": row["visitingOpID"],
+                "nPasses": row["nPasses"],
+                "passesCost": float(row["passesCost"])
+            }
+            for row in rows
+        ]
+
+        # Δημιουργία απάντησης
+        response = {
+            "tollOpID": tollOpID,
+            "requestTimestamp": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+            "periodFrom": from_date_formatted,
+            "periodTo": to_date_formatted,
+            "vOpList": vOpList
+        }
+
+        return jsonify(response), 200
+
+    except Exception as e:
+        return jsonify({
+            "status": "failed",
+            "info": str(e)
+        }), 500
+
+    finally:
+        if cursor is not None:
+            cursor.close()
+        if conn is not None:
+            conn.close()  
+
+
 
 # Εκκίνηση της εφαρμογής
 if __name__ == '__main__':
