@@ -1,3 +1,4 @@
+#app.py
 from flask import Flask, jsonify, request, make_response
 import mysql.connector
 import csv
@@ -7,9 +8,29 @@ from collections import OrderedDict
 from datetime import datetime
 from flask import redirect
 
+import logging
+
+#extra added for frontend
+from flask_cors import CORS  # Import CORS
 
 
 app = Flask(__name__)
+
+#extra added for frontend
+# Enable CORS for all routes and allow specific origins
+CORS(app, resources={
+    r"/api/*": {
+        "origins": "https://localhost:5173",
+        "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+        "allow_headers": ["Content-Type", "Authorization", "X-OBSERVATORY-AUTH"],
+        "expose_headers": ["X-OBSERVATORY-AUTH"],
+    }
+}, supports_credentials=True)
+
+# Configure logging
+logging.basicConfig(level=logging.DEBUG)
+
+
 @app.before_request
 def enforce_https():
     if request.url.startswith('http://'):
@@ -21,7 +42,7 @@ def get_db_connection():
     return mysql.connector.connect(
         host="localhost",  # Δημόσια IP της βάσης
         user="root",       # Username της MySQL
-        password="alexandra",   # Password της MySQL
+        password="sqlpass25*",   # Password της MySQL
         database="toll_management",  # Όνομα της βάσης
         charset="utf8mb4"
     )
@@ -77,6 +98,9 @@ def login():
         username = request.form.get('username')
         password = request.form.get('password')
 
+        # Debug logging: print the received credentials
+        app.logger.debug(f"Received login attempt with username: '{username}' and password: '{password}'")
+
 
         if not username or not password:
             return jsonify({"status": "failed", "info": "Missing username or password"}), 400
@@ -95,6 +119,8 @@ def login():
 
 
         if not user:
+            # Log that no user was found
+            app.logger.debug("No matching user found in the database.")
             return jsonify({"status": "failed", "info": "Invalid credentials"}), 401
 
 
@@ -104,6 +130,7 @@ def login():
 
         return jsonify({"status": "OK", "token": token}), 200
     except Exception as e:
+        app.logger.exception("Login error:")
         return jsonify({"status": "failed", "info": str(e)}), 500
 
 
@@ -645,7 +672,61 @@ def charges_by(tollOpID, from_date, to_date):
             conn.close()  
 
 
+@app.route('/api/passes', methods=['GET'])
+def get_passes():
+    try:
+        # Authenticate the user
+        token = request.headers.get('X-OBSERVATORY-AUTH')
+        if not token or token not in tokens:
+            return jsonify({"status": "failed", "info": "Invalid or missing token"}), 401
+        
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+        
+        # Fetch all passes
+        cursor.execute("SELECT * FROM tollPasses")
+        passes = cursor.fetchall()
+        
+        cursor.close()
+        conn.close()
+        
+        return jsonify(passes), 200
+    except Exception as e:
+        logging.exception("An error occurred while fetching passes.")
+        return jsonify({"status": "failed", "info": str(e)}), 500
+
+# app.py (continued)
+
+@app.route('/api/admin/tollstations', methods=['GET'])
+def get_tollstations():
+    try:
+        # Authenticate the user
+        token = request.headers.get('X-OBSERVATORY-AUTH')
+        if not token or token not in tokens:
+            return jsonify({"status": "failed", "info": "Invalid or missing token"}), 401
+        
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+        
+        # Fetch all toll stations
+        cursor.execute("SELECT * FROM tollStations")
+        tollstations = cursor.fetchall()
+        
+        cursor.close()
+        conn.close()
+        
+        return jsonify(tollstations), 200
+    except Exception as e:
+        logging.exception("An error occurred while fetching toll stations.")
+        return jsonify({"status": "failed", "info": str(e)}), 500
+
 
 # Εκκίνηση της εφαρμογής
+#if __name__ == '__main__':
+#    app.run(port=9115,ssl_context=('new_cert.pem', 'new_key.pem'))
 if __name__ == '__main__':
-    app.run(port=9115,ssl_context=('new_cert.pem', 'new_key.pem'))
+    app.run(
+        host='0.0.0.0',  # Επιτρέπει τη σύνδεση από οποιαδήποτε διεύθυνση
+        port=9115,
+        ssl_context=('new_cert.pem', 'new_key.pem')  # Καθορίζει τα πιστοποιητικά για HTTPS
+    )
