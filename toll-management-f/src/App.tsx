@@ -9,7 +9,12 @@ import {
 import LoginForm from "./pages/LoginForm";
 import Dashboard from "./pages/Dashboard";
 import MapPage from "./pages/MapPage";
-import DebtsPage from "./pages/DebtsPage";
+import DebtsOverview from "./pages/DebtsOverview";
+import DebtsDetail from "./pages/DebtsDetails";
+
+import DebtsOverviewTroubleshoot from "./pages/DebtsOverviewTroubleshoot";
+import DebtsOverviewSingleDate from "./pages/DebtsOverviewSingleDate";
+
 import PrivateRoute from "./components/PrivateRoute";
 import NavbarComponent from "./components/NavbarComponent"; // Optional: Create a Navbar
 
@@ -24,7 +29,8 @@ const App: React.FC = () => {
         <Route element={<PrivateRoute />}>
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/map" element={<MapPage />} />
-          <Route path="/debts" element={<DebtsPage />} />
+          <Route path="/debts" element={<DebtsOverview />} />
+          <Route path="/debts/:data" element={<DebtsDetail />} />
         </Route>
 
         {/* Redirect to Dashboard if authenticated, else to Login */}

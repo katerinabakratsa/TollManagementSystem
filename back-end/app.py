@@ -695,7 +695,6 @@ def get_passes():
         logging.exception("An error occurred while fetching passes.")
         return jsonify({"status": "failed", "info": str(e)}), 500
 
-# app.py (continued)
 
 @app.route('/api/admin/tollstations', methods=['GET'])
 def get_tollstations():
@@ -720,6 +719,53 @@ def get_tollstations():
         logging.exception("An error occurred while fetching toll stations.")
         return jsonify({"status": "failed", "info": str(e)}), 500
 
+#-----------GETS THE FIRST AND LAST DATE FROM TOLLPASSES-------------#
+@app.route('/api/availableDates', methods=['GET'])
+def get_available_dates():
+    try:
+        # Authenticate the request
+        token = request.headers.get('X-OBSERVATORY-AUTH')
+        if not token or token not in tokens:
+            print("Authentication failed: Invalid or missing token")
+            return jsonify({"status": "failed", "info": "Invalid or missing token"}), 401
+
+        print("Authentication successful. Connecting to database...")
+
+        # Connect to the database
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+
+        print("Executing SQL query to fetch min/max timestamp...")
+
+        # SQL query
+        query = """
+            SELECT MIN(DATE(timestamp)) AS first_date,
+                   MAX(DATE(timestamp)) AS last_date
+            FROM tollPasses
+        """
+        cursor.execute(query)
+        result = cursor.fetchone()
+
+        print(f"SQL Query Result: {result}")  # Debugging log
+
+        # Close connection
+        cursor.close()
+        conn.close()
+
+        if result and result["first_date"] and result["last_date"]:
+            first_date = result["first_date"].strftime('%Y%m%d')
+            last_date = result["last_date"].strftime('%Y%m%d')
+            #app.logger.debug(f"Returning dates: First={first_date}, Last={last_date}")
+            print(f"Returning dates: First={first_date}, Last={last_date}")  # Debugging
+            return jsonify({"first_date": first_date, "last_date": last_date}), 200
+        else:
+            #app.logger.debug(f"No valid dates found in the database.")
+            print("No valid dates found in the database.")
+            return jsonify({"error": "No date data available"}), 404
+
+    except Exception as e:
+        print(f"Error occurred: {e}")
+        return jsonify({"status": "failed", "info": str(e)}), 500
 
 # Εκκίνηση της εφαρμογής
 #if __name__ == '__main__':
