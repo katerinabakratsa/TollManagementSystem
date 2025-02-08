@@ -722,6 +722,7 @@ def get_tollstations():
 #-----------GETS THE FIRST AND LAST DATE FROM TOLLPASSES-------------#
 @app.route('/api/availableDates', methods=['GET'])
 def get_available_dates():
+    print("Received request for /api/availableDates")  # Debugging
     try:
         # Authenticate the request
         token = request.headers.get('X-OBSERVATORY-AUTH')

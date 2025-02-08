@@ -13,7 +13,7 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 TOKEN = None
 
 # Βοηθητική συνάρτηση για κλήση API
-def call_api(endpoint, method="GET", data=None, params=None, headers=None, files=None):
+def call_api(endpoint, method="GET", data=None, params=None, headers=None, files=None, token=None):
     url = f"{API_BASE_URL}/{endpoint}"
     if not headers:
         headers = {}
@@ -153,11 +153,19 @@ def passes_cost(stationop, tagop, from_date, to_date):
     if data:
         print(json.dumps(data, indent=4))
 
+# Function to test the availableDates endpoint
+def get_available_dates(token=None):
+    endpoint = "availableDates"  # The endpoint we are testing
+    data = call_api(endpoint, "GET", token=token if token else TOKEN)  # Perform the GET request
+    if data:
+        print(json.dumps(data, indent=4))  # Pretty-print the JSON response
+
+
 # Ρύθμιση CLI
 def setup_cli():
     parser = argparse.ArgumentParser(description="Toll Management CLI")
     parser.add_argument("scope", choices=[
-        "healthcheck", "login", "logout", "tollstationpasses", "addpasses", "users", "usermod", "passanalysis", "resetstations", "resetpasses", "chargesby", "passescost"
+        "healthcheck", "login", "logout", "tollstationpasses", "addpasses", "users", "usermod", "passanalysis", "resetstations", "resetpasses", "chargesby", "passescost", "availabledates"
     ], help="The action to perform.")
     parser.add_argument("--format", choices=["json", "csv"], default="csv", help="Format of the response.")
     parser.add_argument("--username", help="Username for login or usermod.")
@@ -169,6 +177,8 @@ def setup_cli():
     parser.add_argument("--opid", help="Operator ID for chargesby or passescost.")
     parser.add_argument("--stationop", help="Station Operator ID for passescost.")
     parser.add_argument("--tagop", help="Tag Operator ID for passescost.")
+    parser.add_argument("--token", help="API authentication token")
+
 
     args = parser.parse_args()
 
@@ -196,6 +206,8 @@ def setup_cli():
         passes_cost(args.stationop, args.tagop, args.from_date, args.to_date)
     elif args.scope == "passanalysis" and args.stationop and args.tagop and args.from_date and args.to_date:
         pass_analysis(args.stationop, args.tagop, args.from_date, args.to_date)
+    elif args.scope == "availabledates":  # <-- New CLI command
+        get_available_dates(args.token)
     else:
         print("Invalid or incomplete arguments. Use --help for usage information.")
 
