@@ -1,4 +1,3 @@
-// src/pages/LoginForm.tsx
 import React, { useState, useContext } from "react";
 import axios from "../api/api";
 import { AppContext } from "../context/AppContext";
@@ -7,8 +6,7 @@ import { useNavigate } from "react-router-dom";
 const LoginForm: React.FC = () => {
   const [username, setUsername] = useState<string>("");
   const [password, setPassword] = useState<string>("");
-
-  const [error, setError] = useState<string>("");
+  const [error, setError] = useState<string | null>(null); // ✅ ΔΕΝ εξαφανίζεται αυτόματα
   const [loading, setLoading] = useState<boolean>(false);
 
   const { login } = useContext(AppContext);
@@ -16,23 +14,21 @@ const LoginForm: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError("");
     setLoading(true);
 
     if (!username || !password) {
-      setError("Please enter both username and password.");
+      setError("❌ Please enter both username and password.");
       setLoading(false);
       return;
     }
 
     try {
-      // Send data as multipart/form-data
       const formData = new FormData();
       formData.append("username", username);
       formData.append("password", password);
 
       const response = await axios.post("/login", formData, {
-        withCredentials: true, // Ensure cookies, if any, are included
+        withCredentials: true,
         headers: {
           "Content-Type": "multipart/form-data",
         },
@@ -40,58 +36,50 @@ const LoginForm: React.FC = () => {
 
       if (response.data.status === "OK" && response.data.token) {
         login(response.data.token);
-        navigate("/dashboard"); // Redirect to Dashboard
+        setError(null); // ✅ Αφαιρούμε το error ΜΟΝΟ αν γίνει επιτυχές login
+        navigate("/");
       } else {
-        setError(response.data.info || "Login failed.");
+        setError("❌ Incorrect username or password."); // ✅ Δεν καθαρίζεται
       }
     } catch (error: any) {
-      if (error.response) {
-        setError(
-          `Error ${error.response.status}: ${JSON.stringify(
-            error.response.data
-          )}`
-        );
-      } else {
-        setError(`Error: ${error.message}`);
-      }
+      setError("❌ Connection error. Please try again.");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="container mt-5">
-      <h2>Login</h2>
-      <form onSubmit={handleSubmit} className="mt-4">
-        {error && <div className="alert alert-danger">{error}</div>}
-        <div className="mb-3">
-          <label className="form-label">
-            Username:
+    <div className="login-container">
+      <div className="login-box">
+        <h2>Login</h2>
+
+        {/* ✅ Το μήνυμα λάθους ΔΕΝ εξαφανίζεται */}
+        {error && <div className="error-message">{error}</div>}
+
+        <form onSubmit={handleSubmit} className="login-form">
+          <div className="input-group">
+            <label>Username:</label>
             <input
               type="text"
-              className="form-control"
               value={username}
               onChange={(e) => setUsername(e.target.value)}
-              required // Form validation
+              required
             />
-          </label>
-        </div>
-        <div className="mb-3">
-          <label className="form-label">
-            Password:
+          </div>
+          <div className="input-group">
+            <label>Password:</label>
             <input
               type="password"
-              className="form-control"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
-              required // Form validation
+              required
             />
-          </label>
-        </div>
-        <button type="submit" className="btn btn-primary" disabled={loading}>
-          {loading ? "Logging in..." : "Submit"}
-        </button>
-      </form>
+          </div>
+          <button type="submit" className="login-button" disabled={loading}>
+            {loading ? "Logging in..." : "Submit"}
+          </button>
+        </form>
+      </div>
     </div>
   );
 };

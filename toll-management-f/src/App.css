@@ -1,42 +1,315 @@
-#root {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
+/* ============================
+   Global Theme Colors
+   ============================ */
+body {
+  background: linear-gradient(135deg, #E3ECF3, #CBD5E1);
+  /* Light Blue Gradient */
+  color: #1E3A8A;
+  /* Dark blue text */
+  font-family: "Poppins", sans-serif;
+}
+
+/* ============================
+     Navbar Styling
+     ============================ */
+.navbar {
+  background: linear-gradient(to right, #2B6CB0, #3182CE);
+  backdrop-filter: blur(10px);
+  border-bottom: 2px solid rgba(255, 255, 255, 0.2);
+}
+
+.navbar-brand {
+  color: #ffffff !important;
+  font-weight: bold;
+  font-size: 1.5rem;
+}
+
+.navbar-nav .nav-link {
+  color: #ffffff !important;
+  font-size: 1rem;
+  font-weight: 500;
+}
+
+.navbar-nav .nav-link:hover {
+  color: #FDE68A !important;
+  /* Soft Yellow Hover */
+  text-shadow: 0px 0px 10px rgba(255, 255, 255, 0.6);
+}
+
+/* ============================
+     Login Page Styling
+   ============================ */
+
+/* 🔵 Background με gradient */
+.login-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 90vh;
+  background: linear-gradient(to right, #1E3A8A, #1E40AF);
+}
+
+/* 🔲 Κουτί login */
+.login-box {
+  background: white;
+  padding: 30px;
+  border-radius: 12px;
+  box-shadow: 0px 8px 20px rgba(0, 0, 0, 0.2);
+  text-align: center;
+  width: 350px;
+  margin-top: -40px;
+}
+
+/* 🖊️ Τίτλος */
+.login-box h2 {
+  margin-bottom: 20px;
+  color: #1E3A8A;
+}
+
+/* 🔤 Input πεδία */
+.input-group {
+  margin-bottom: 15px;
+  text-align: left;
+}
+
+.input-group label {
+  display: block;
+  font-weight: bold;
+  margin-bottom: 5px;
+}
+
+.input-group input {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 16px;
+}
+
+/* 🔘 Κουμπί Σύνδεσης */
+.login-button {
+  width: 100%;
+  padding: 10px;
+  background: #1E3A8A;
+  color: white;
+  border: none;
+  border-radius: 6px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: 0.3s ease-in-out;
+}
+
+.login-button:hover {
+  background: #1E40AF;
+}
+
+/* ❌ Μήνυμα λάθους */
+.error-message {
+  color: red;
+  font-weight: bold;
+  margin-bottom: 15px;
+  font-size: 14px;
+  background: white;
+  padding: 10px;
+  border-radius: 5px;
   text-align: center;
 }
 
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
-}
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
+
+
+/* ============================
+     Home Page Styling
+   ============================ */
+.menu-grid {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 20px;
 }
 
-@keyframes logo-spin {
-  from {
-    transform: rotate(0deg);
-  }
-  to {
-    transform: rotate(360deg);
-  }
+/* 🔲 Όλα τα κουτιά έχουν ίδιο μέγεθος */
+.menu-card {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  height: 180px;
+  /* ✅ Σταθερό ύψος για όλα τα κουτιά */
+  min-height: 180px;
+  width: 100%;
+  padding: 20px;
+  border-radius: 12px;
+  background: white;
+  box-shadow: 0px 8px 16px rgba(0, 0, 0, 0.1);
+  border: 2px solid #1E3A8A;
+  transition: all 0.3s ease-in-out;
 }
 
-@media (prefers-reduced-motion: no-preference) {
-  a:nth-of-type(2) .logo {
-    animation: logo-spin infinite 20s linear;
-  }
+.menu-card:hover {
+  transform: scale(1.03);
+  background: #1E3A8A;
+  color: white !important;
 }
 
-.card {
-  padding: 2em;
+/* 🎯 Εξασφαλίζουμε ότι το κείμενο στο εσωτερικό είναι κεντραρισμένο */
+.menu-card .card-body {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
 }
 
-.read-the-docs {
-  color: #888;
+.menu-icon {
+  font-size: 2rem;
+  color: #1E3A8A;
+  margin-bottom: 10px;
+}
+
+.menu-card:hover .menu-icon {
+  color: white;
+}
+
+/* 🌍 Στυλ για το Χάρτη */
+.map-wrapper {
+  position: relative;
+  width: 100%;
+  max-width: 1000px;
+  height: 300px;
+  margin: 3rem auto 1rem auto;
+  /* Επιτρέπει το scrolling */
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0px 10px 25px rgba(0, 0, 0, 0.1);
+}
+
+/* 🎯 Ο χάρτης παραμένει διαδραστικός */
+.map-container {
+  width: 100%;
+  height: 100%;
+}
+
+/* 🔘 Κουμπί "Πλήρης Χάρτης" - Κάτω από τον χάρτη στη μέση */
+.map-button-container {
+  display: flex;
+  justify-content: center;
+  margin-top: 12px;
+}
+
+.map-button {
+  background: linear-gradient(to right, #1E3A8A, #1E40AF);
+  color: white;
+  border: none;
+  padding: 12px 20px;
+  border-radius: 25px;
+  font-weight: bold;
+  font-size: 1rem;
+  box-shadow: 0px 4px 10px rgba(0, 0, 0, 0.2);
+  transition: all 0.3s ease-in-out;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* 🎨 Hover Effect */
+.map-button:hover {
+  background: linear-gradient(to right, #1E40AF, #1E3A8A);
+  transform: scale(1.1);
+  box-shadow: 0px 6px 12px rgba(0, 0, 0, 0.3);
+}
+
+/* ============================
+     Dashboard Styling
+   ============================ */
+.dashboard-container {
+  background-color: #f8f9fa;
+  padding: 20px;
+  border-radius: 10px;
+}
+
+.dashboard-title {
+  font-size: 28px;
+  font-weight: bold;
+  color: #333;
+  margin-bottom: 20px;
+}
+
+.dashboard-card {
+  padding: 20px;
+  text-align: center;
+  background: #ffffff;
+  border-radius: 10px;
+  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.dashboard-chart-card {
+  padding: 20px;
+  background: #ffffff;
+  border-radius: 10px;
+  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.apply-filters-button {
+  padding: 10px 20px;
+  font-size: 16px;
+}
+
+
+
+/* ============================
+     Buttons Styling
+     ============================ */
+.btn-primary {
+  background: linear-gradient(135deg, #4299E1, #2B6CB0);
+  border: none;
+  color: white;
+  font-size: 1.1rem;
+  padding: 12px 24px;
+  border-radius: 8px;
+  transition: all 0.3s ease-in-out;
+}
+
+.btn-primary:hover {
+  background: linear-gradient(135deg, #2B6CB0, #4299E1);
+  box-shadow: 0px 4px 10px rgba(59, 130, 246, 0.5);
+}
+
+.btn-danger {
+  background: linear-gradient(135deg, #EF4444, #B91C1C);
+  border: none;
+  color: white;
+  font-size: 1.1rem;
+  padding: 12px 24px;
+  border-radius: 8px;
+  transition: all 0.3s ease-in-out;
+}
+
+.btn-danger:hover {
+  background: linear-gradient(135deg, #B91C1C, #EF4444);
+  box-shadow: 0px 4px 10px rgba(239, 68, 68, 0.5);
+}
+
+/* ============================
+     Logout Button Styling
+   ============================ */
+.btn-logout {
+  background-color: white !important;
+  color: #DC2626 !important;
+  font-weight: bold;
+  border: 2px solid #DC2626 !important;
+  padding: 8px 16px;
+  border-radius: 8px;
+  transition: all 0.3s ease-in-out;
+  position: absolute;
+  top: 10px;
+  right: 20px;
+  font-size: 16px;
+}
+
+/* Hover Effect */
+.btn-logout:hover {
+  background-color: #DC2626 !important;
+  color: white !important;
+  box-shadow: 0px 4px 10px rgba(239, 68, 68, 0.5);
 }

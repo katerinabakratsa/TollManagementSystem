@@ -5,6 +5,7 @@ import App from "./App";
 import { AppProvider } from "./context/AppContext";
 import ErrorBoundary from "./ErrorBoundary";
 import "bootstrap/dist/css/bootstrap.min.css";
+import "./App.css";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
   <React.StrictMode>

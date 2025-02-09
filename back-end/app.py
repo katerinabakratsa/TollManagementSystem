@@ -17,15 +17,27 @@ from flask_cors import CORS  # Import CORS
 app = Flask(__name__)
 
 #extra added for frontend
-# Enable CORS for all routes and allow specific origins
-CORS(app, resources={
-    r"/api/*": {
-        "origins": "https://localhost:5173",
-        "methods": ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-        "allow_headers": ["Content-Type", "Authorization", "X-OBSERVATORY-AUTH"],
-        "expose_headers": ["X-OBSERVATORY-AUTH"],
-    }
-}, supports_credentials=True)
+# Σωστή ρύθμιση CORS
+CORS(app, resources={r"/api/*": {"origins": "*"}}, supports_credentials=True)
+
+@app.after_request
+def add_cors_headers(response):
+    response.headers["Access-Control-Allow-Origin"] = "https://localhost:5173"
+    response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS"
+    response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization, X-OBSERVATORY-AUTH"
+    response.headers["Access-Control-Expose-Headers"] = "X-OBSERVATORY-AUTH"
+    response.headers["Access-Control-Allow-Credentials"] = "true"
+    return response
+
+# ✅ Χειρισμός OPTIONS requests
+@app.route("/api/<path:path>", methods=["OPTIONS"])
+def options_handler(path):
+    response = jsonify({"status": "CORS OK"})
+    response.headers["Access-Control-Allow-Origin"] = "https://localhost:5173"
+    response.headers["Access-Control-Allow-Methods"] = "GET, POST, PUT, DELETE, OPTIONS"
+    response.headers["Access-Control-Allow-Headers"] = "Content-Type, Authorization, X-OBSERVATORY-AUTH"
+    response.headers["Access-Control-Allow-Credentials"] = "true"
+    return response, 200
 
 # Configure logging
 logging.basicConfig(level=logging.DEBUG)
@@ -42,7 +54,7 @@ def get_db_connection():
     return mysql.connector.connect(
         host="localhost",  # Δημόσια IP της βάσης
         user="root",       # Username της MySQL
-        password="sqlpass25*",   # Password της MySQL
+        password="alexandra",   # Password της MySQL
         database="toll_management",  # Όνομα της βάσης
         charset="utf8mb4"
     )
@@ -460,6 +472,8 @@ def pass_analysis(stationOpID, tagOpID, from_date, to_date):
                 "info": f"Station operator with OpID={stationOpID} not found"
             }), 404
 
+        print(f"Received Dates: from_date={from_date}, to_date={to_date}")
+
         # 6. Ερώτημα για τις διελεύσεις
         query = """
             SELECT 
@@ -474,6 +488,8 @@ def pass_analysis(stationOpID, tagOpID, from_date, to_date):
               AND DATE(p.timestamp) BETWEEN %s AND %s
             ORDER BY p.timestamp ASC
         """
+        print(f"Executing query with: stationOpID={stationOpID}, tagOpID={tagOpID}, from_date={from_date_formatted}, to_date={to_date_formatted}")
+
         cursor.execute(query, (stationOpID, tagOpID, from_date_formatted, to_date_formatted))
         passes = cursor.fetchall()
 
@@ -503,7 +519,8 @@ def pass_analysis(stationOpID, tagOpID, from_date, to_date):
             "nPasses":          len(pass_list),
             "passList":         pass_list
         }
-
+        
+        
         # Προαιρετικά: format (JSON / CSV)
         format_type = request.args.get("format", "json")
         return format_response([response], format_type)

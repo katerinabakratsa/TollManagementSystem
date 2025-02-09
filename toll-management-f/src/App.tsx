@@ -7,6 +7,7 @@ import {
   Navigate,
 } from "react-router-dom";
 import LoginForm from "./pages/LoginForm";
+import Home from "./pages/Home";
 import Dashboard from "./pages/Dashboard";
 import MapPage from "./pages/MapPage";
 import DebtsOverview from "./pages/DebtsOverview";
@@ -23,18 +24,20 @@ const App: React.FC = () => {
     <Router>
       <NavbarComponent /> {/* Optional: Add a navigation bar */}
       <Routes>
+        {/* Public Route for Login */}
         <Route path="/login" element={<LoginForm />} />
 
         {/* Protected Routes */}
         <Route element={<PrivateRoute />}>
+          <Route path="/" element={<Home />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/map" element={<MapPage />} />
           <Route path="/debts" element={<DebtsOverview />} />
           <Route path="/debts/:data" element={<DebtsDetail />} />
         </Route>
 
-        {/* Redirect to Dashboard if authenticated, else to Login */}
-        <Route path="/" element={<Navigate to="/dashboard" replace />} />
+        {/* Redirect to Home if authenticated, else to Login */}
+        <Route path="/" element={<Navigate to="/" replace />} />
 
         {/* Catch-all Route */}
         <Route path="*" element={<Navigate to="/" replace />} />
