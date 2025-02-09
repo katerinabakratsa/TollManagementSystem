@@ -5,8 +5,8 @@ import fs from 'fs';
 import path from 'path';
 
 // Define the path to SSL certificates using process.cwd()
-const sslKeyPath = path.resolve(process.cwd(), 'localhost-key.pem');
-const sslCertPath = path.resolve(process.cwd(), 'localhost-cert.pem');
+const sslKeyPath = path.resolve(__dirname, 'key.pem');
+const sslCertPath = path.resolve(__dirname, 'cert.pem');
 
 export default defineConfig({
   server: {

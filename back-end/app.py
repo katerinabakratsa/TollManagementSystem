@@ -792,5 +792,5 @@ if __name__ == '__main__':
     app.run(
         host='0.0.0.0',  # Επιτρέπει τη σύνδεση από οποιαδήποτε διεύθυνση
         port=9115,
-        ssl_context=('new_cert.pem', 'new_key.pem')  # Καθορίζει τα πιστοποιητικά για HTTPS
+        ssl_context=('cert.pem', 'key.pem')  # Καθορίζει τα πιστοποιητικά για HTTPS
     )
