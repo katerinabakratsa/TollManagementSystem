@@ -41,7 +41,7 @@ const Home: React.FC = () => {
     }, []);
 
     const menuItems = [
-        { title: "Διελεύσεις", description: "Σελίδα με τα δεδομένα διελεύσεων.", icon: <FaRoad />, path: "/d" },
+        { title: "Διελεύσεις", description: "Σελίδα με τα δεδομένα διελεύσεων.", icon: <FaRoad />, path: "/crossings" },
         { title: "Προβολή Οφειλών", description: "Σελίδα με τις οικονομικές συναλλαγές και τα χρέη/οφειλές.", icon: <FaMoneyBill />, path: "/debts" },
         { title: "Ανάλυση Δεδομένων", description: "Ενότητα με γραφήματα και στατιστικά δεδομένα.", icon: <FaChartBar />, path: "/dashboard" },
         { title: "Ιστορικό", description: "Πρόσβαση σε παλαιότερες εγγραφές διελεύσεων και συναλλαγών.", icon: <FaHistory />, path: "/history" },

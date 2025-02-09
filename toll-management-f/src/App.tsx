@@ -12,6 +12,7 @@ import Dashboard from "./pages/Dashboard";
 import MapPage from "./pages/MapPage";
 import DebtsOverview from "./pages/DebtsOverview";
 import DebtsDetail from "./pages/DebtsDetails";
+import Crossings from "./pages/Crossings";
 
 import DebtsOverviewTroubleshoot from "./pages/DebtsOverviewTroubleshoot";
 import DebtsOverviewSingleDate from "./pages/DebtsOverviewSingleDate";
@@ -34,6 +35,7 @@ const App: React.FC = () => {
           <Route path="/map" element={<MapPage />} />
           <Route path="/debts" element={<DebtsOverview />} />
           <Route path="/debts/:data" element={<DebtsDetail />} />
+          <Route path="/crossings" element={<Crossings />} />
         </Route>
 
         {/* Redirect to Home if authenticated, else to Login */}

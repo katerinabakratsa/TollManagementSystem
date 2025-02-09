@@ -222,39 +222,211 @@ body {
 /* ============================
      Dashboard Styling
    ============================ */
-.dashboard-container {
-  background-color: #f8f9fa;
-  padding: 20px;
-  border-radius: 10px;
+/* ---------- General Styling ---------- */
+body {
+  background-color: #eef2f7;
+  font-family: "Roboto", sans-serif;
 }
 
+/* Container Styling */
+.dashboard-container {
+  background-color: white;
+  padding: 30px;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  max-width: 90%;
+  margin: auto;
+}
+
+/* Title Styling */
 .dashboard-title {
-  font-size: 28px;
+  font-size: 30px;
   font-weight: bold;
-  color: #333;
+  color: #2c3e50;
   margin-bottom: 20px;
 }
 
+/* ---------- Statistic Cards ---------- */
 .dashboard-card {
-  padding: 20px;
+  background: linear-gradient(135deg, #f0f5fa, #d9e6f2);
+  /* Χρώμα με διαβάθμιση */
+  padding: 25px;
+  border-radius: 15px;
   text-align: center;
-  background: #ffffff;
-  border-radius: 10px;
-  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.15);
+  font-size: 18px;
+  transition: transform 0.2s ease-in-out;
 }
 
-.dashboard-chart-card {
-  padding: 20px;
-  background: #ffffff;
+.dashboard-card h5 {
+  font-size: 20px;
+  color: #34495e;
+  font-weight: 600;
+}
+
+.dashboard-card h2 {
+  font-size: 32px;
+  font-weight: bold;
+  color: #2c3e50;
+}
+
+.dashboard-card:hover {
+  transform: scale(1.05);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+}
+
+/* ---------- Date Picker Styling ---------- */
+.react-datepicker {
+  z-index: 1050 !important;
+  /* Να εμφανίζεται πάνω από τα υπόλοιπα */
+  font-size: 14px;
+  /* Μικρότερη γραμματοσειρά */
+}
+
+.react-datepicker__header {
+  background-color: #4a90e2;
+  /* Μπλε χρώμα για τον τίτλο */
+  color: white;
+  font-size: 14px;
+}
+
+.react-datepicker__month {
+  font-size: 13px;
+  /* Μικρότερη γραμματοσειρά στους μήνες */
+}
+
+.react-datepicker__day-name,
+.react-datepicker__day {
+  font-size: 12px;
+  /* Μικρότερη γραμματοσειρά στις ημέρες */
+}
+
+/* ---------- Filters & Controls ---------- */
+.dashboard-controls {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 20px;
+}
+
+.operator-select {
+  width: 250px;
+  font-size: 16px;
+  padding: 10px;
   border-radius: 10px;
-  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+  background-color: #f8f9fa;
+  border: 1px solid #ccc;
+}
+
+/* ---------- Buttons Styling ---------- */
+.dashboard-button {
+  padding: 12px 20px;
+  font-size: 16px;
+  border-radius: 8px;
+  font-weight: bold;
 }
 
 .apply-filters-button {
-  padding: 10px 20px;
-  font-size: 16px;
+  background-color: #28a745;
+  border-color: #28a745;
+  color: white;
+  transition: 0.3s;
 }
 
+.apply-filters-button:hover {
+  background-color: #302188;
+  border-color: #302188;
+}
+
+/* ---------- Graph Type Buttons ---------- */
+.chart-type-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+}
+
+.chart-type-button {
+  padding: 12px 18px;
+  font-size: 16px;
+  border-radius: 10px;
+  transition: all 0.3s;
+}
+
+.chart-type-button.active {
+  background-color: #007bff;
+  color: white;
+  border: none;
+}
+
+.chart-type-button.inactive {
+  background-color: #f0f0f0;
+  color: #333;
+  border: 1px solid #ddd;
+}
+
+.chart-type-button:hover {
+  opacity: 0.8;
+}
+
+/* ---------- Chart Section ---------- */
+.dashboard-chart-card {
+  background: white;
+  padding: 25px;
+  border-radius: 12px;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.1);
+}
+
+/* ------------ Date Picker Styling ------------ */
+.react-datepicker {
+  z-index: 99999 !important;
+  /* Εξασφαλίζει ότι είναι πάνω από όλα */
+  position: absolute !important;
+  background: white;
+  box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+  border-radius: 8px;
+}
+
+.react-datepicker__header {
+  background-color: #4a90e2;
+  color: white;
+  font-size: 14px;
+}
+
+.react-datepicker__month {
+  font-size: 13px;
+}
+
+.react-datepicker__day-name,
+.react-datepicker__day {
+  font-size: 12px;
+}
+
+/* ------------ Εξασφαλίζει ότι τίποτα δεν επικαλύπτει το ημερολόγιο ------------ */
+.datepicker-container {
+  position: relative;
+  z-index: 99999;
+}
+
+.datepicker-card h5 {
+  margin-bottom: 5px !important;
+  /* Μειώνει το κενό κάτω από τον τίτλο */
+}
+
+.dashboard-chart-card {
+  position: relative;
+  z-index: 1;
+  overflow: visible !important;
+  /* Εξασφαλίζει ότι δεν κρύβεται τίποτα */
+}
+
+.dashboard-summary-card {
+  background-color: #f0f8ff;
+  /* Απαλό μπλε */
+  border-radius: 10px;
+  padding: 20px;
+  text-align: center;
+  box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.1);
+}
 
 
 /* ============================
