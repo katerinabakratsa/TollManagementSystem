@@ -1,0 +1,339 @@
+{
+	"info": {
+		"_postman_id": "64efee46-1938-460d-90e1-774cf3de2c82",
+		"name": "Toll Interopability API",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "40395573"
+	},
+	"item": [
+		{
+			"name": "Healthcheck",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "https://localhost:9115/api/admin/healthcheck",
+					"protocol": "https",
+					"host": [
+						"localhost"
+					],
+					"port": "9115",
+					"path": [
+						"api",
+						"admin",
+						"healthcheck"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "reset_stations",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"url": {
+					"raw": "https://127.0.0.1:9115/api/admin/resetstations",
+					"protocol": "https",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "9115",
+					"path": [
+						"api",
+						"admin",
+						"resetstations"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "reset_passes",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Bearer some_token",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "https://127.0.0.1:9115/api/admin/resetpasses",
+					"protocol": "https",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "9115",
+					"path": [
+						"api",
+						"admin",
+						"resetpasses"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "add_passes",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "formdata",
+					"formdata": [
+						{
+							"key": "file",
+							"type": "file",
+							"src": "/C:/Users/morai/Desktop/toll_interopability/softeng24-24/back-end/passes-sample.csv"
+						}
+					]
+				},
+				"url": {
+					"raw": "https://127.0.0.1:9115/api/admin/addpasses",
+					"protocol": "https",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "9115",
+					"path": [
+						"api",
+						"admin",
+						"addpasses"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "login",
+			"request": {
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "urlencoded",
+					"urlencoded": [
+						{
+							"key": "username",
+							"value": "admin",
+							"type": "text"
+						},
+						{
+							"key": "password",
+							"value": "freepasses4all",
+							"type": "text"
+						}
+					]
+				},
+				"url": {
+					"raw": "https://127.0.0.1:9115/api/login",
+					"protocol": "https",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "9115",
+					"path": [
+						"api",
+						"login"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "logout",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "X-OBSERVATORY-AUTH",
+						"value": "31f5c133-2f32-43be-ada9-343c77732548",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "https://127.0.0.1:9115/api/logout",
+					"protocol": "https",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "9115",
+					"path": [
+						"api",
+						"logout"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "tollStationPasses",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "https://localhost:9115/api/tollStationPasses/tollStationID/NAO01/date_from/20240101/date_to/20240131",
+					"protocol": "https",
+					"host": [
+						"localhost"
+					],
+					"port": "9115",
+					"path": [
+						"api",
+						"tollStationPasses",
+						"tollStationID",
+						"NAO01",
+						"date_from",
+						"20240101",
+						"date_to",
+						"20240131"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "passAnalysis",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "https://127.0.0.1:9115/api/passAnalysis/stationOpID/AM/tagOpID/AM/date_from/20220101/date_to/20230101",
+					"protocol": "https",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "9115",
+					"path": [
+						"api",
+						"passAnalysis",
+						"stationOpID",
+						"AM",
+						"tagOpID",
+						"AM",
+						"date_from",
+						"20220101",
+						"date_to",
+						"20230101"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "users",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "https://127.0.0.1:9115/api/admin/users",
+					"protocol": "https",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "9115",
+					"path": [
+						"api",
+						"admin",
+						"users"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "passesCost",
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "GET",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "https://localhost:9115/api/passesCost/tollOpID/STATION_001/tagOpID/TAG_001/date_from/20240101/date_to/20240131",
+					"protocol": "https",
+					"host": [
+						"localhost"
+					],
+					"port": "9115",
+					"path": [
+						"api",
+						"passesCost",
+						"tollOpID",
+						"STATION_001",
+						"tagOpID",
+						"TAG_001",
+						"date_from",
+						"20240101",
+						"date_to",
+						"20240131"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "chargesBy",
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "GET",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "https://localhost:9115/api/chargesBy/tollOpID/STATION_001/date_from/20240101/date_to/20240131",
+					"protocol": "https",
+					"host": [
+						"localhost"
+					],
+					"port": "9115",
+					"path": [
+						"api",
+						"chargesBy",
+						"tollOpID",
+						"STATION_001",
+						"date_from",
+						"20240101",
+						"date_to",
+						"20240131"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}

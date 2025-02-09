@@ -1,132 +1,30 @@
 openapi: 3.0.0
 info:
-  title: Toll Management API
-  description: REST API for managing toll station interoperability and passes.
+  title: Toll Interoperability API
+  description: API για την ανταλλαγή δεδομένων διοδίων μεταξύ παρόχων.
   version: 1.0.0
 servers:
   - url: https://localhost:9115/api
-    description: Local server
+    description: Τοπικός διακομιστής για ανάπτυξη
 
 paths:
-  /admin/healthcheck:
-    get:
-      summary: Check database health
-      description: Returns the status of the database connection and basic statistics.
-      responses:
-        '200':
-          description: Successful response
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  status:
-                    type: string
-                    example: OK
-                  dbconnection:
-                    type: string
-                    example: connected
-                  n_stations:
-                    type: integer
-                    example: 10
-                  n_tags:
-                    type: integer
-                    example: 100
-                  n_passes:
-                    type: integer
-                    example: 500
-        '401':
-          description: Unauthorized access
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  status:
-                    type: string
-                    example: failed
-                  dbconnection:
-                    type: string
-                    example: disconnected
-                  error:
-                    type: string
-                    example: Unauthorized access
-
-  /admin/resetstations:
+  /login:
     post:
-      summary: Reset toll stations
-      description: Deletes all toll stations and initializes the table with data from a CSV file.
-      responses:
-        '200':
-          description: Stations reset successfully
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  status:
-                    type: string
-                    example: OK
-        '500':
-          description: Internal server error
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  status:
-                    type: string
-                    example: failed
-                  info:
-                    type: string
-                    example: Error message describing the issue
-
-  /admin/resetpasses:
-    post:
-      summary: Reset toll passes
-      description: Deletes all toll passes and initializes related data (e.g., users and tags).
-      responses:
-        '200':
-          description: Passes reset successfully
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  status:
-                    type: string
-                    example: OK
-        '500':
-          description: Internal server error
-          content:
-            application/json:
-              schema:
-                type: object
-                properties:
-                  status:
-                    type: string
-                    example: failed
-                  error:
-                    type: string
-                    example: Error message describing the issue
-
-  /admin/addpasses:
-    post:
-      summary: Add toll passes
-      description: Adds toll pass records from a CSV file uploaded as multipart/form-data.
+      summary: Πραγματοποιεί login και επιστρέφει authentication token.
       requestBody:
+        required: true
         content:
-          multipart/form-data:
+          application/x-www-form-urlencoded:
             schema:
               type: object
               properties:
-                file:
+                username:
                   type: string
-                  format: binary
-                  description: The CSV file containing toll pass records
+                password:
+                  type: string
       responses:
-        '200':
-          description: Passes added successfully
+        "200":
+          description: Επιτυχής αυθεντικοποίηση
           content:
             application/json:
               schema:
@@ -134,30 +32,199 @@ paths:
                 properties:
                   status:
                     type: string
-                    example: OK
-        '400':
-          description: Bad request
+                  token:
+                    type: string
+        "401":
+          description: Μη έγκυρα credentials
+
+  /logout:
+    post:
+      summary: Εκτελεί logout.
+      security:
+        - ApiKeyAuth: []
+      responses:
+        "200":
+          description: Επιτυχές logout
+        "401":
+          description: Μη έγκυρο authentication token
+
+  /passAnalysis/stationOpID/{stationOpID}/tagOpID/{tagOpID}/date_from/{from_date}/date_to/{to_date}:
+    get:
+      summary: Ανάλυση διελεύσεων μεταξύ operators.
+      parameters:
+        - name: stationOpID
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: tagOpID
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: from_date
+          in: path
+          required: true
+          schema:
+            type: string
+            format: date
+        - name: to_date
+          in: path
+          required: true
+          schema:
+            type: string
+            format: date
+      responses:
+        "200":
+          description: Επιτυχής ανάκτηση διελεύσεων
           content:
             application/json:
               schema:
                 type: object
                 properties:
-                  status:
+                  stationOpID:
                     type: string
-                    example: failed
-                  info:
+                  tagOpID:
                     type: string
-                    example: No file selected
-        '500':
-          description: Internal server error
+                  nPasses:
+                    type: integer
+                  passList:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        passID:
+                          type: string
+                        timestamp:
+                          type: string
+                          format: date-time
+                        stationID:
+                          type: string
+                        tagID:
+                          type: string
+                        passCharge:
+                          type: number
+                          format: float
+        "400":
+          description: Μη έγκυρη ημερομηνία ή λάθος δεδομένα
+
+  /passesCost/tollOpID/{tollOpID}/tagOpID/{tagOpID}/date_from/{from_date}/date_to/{to_date}:
+    get:
+      summary: Υπολογισμός κόστους διελεύσεων μεταξύ διοδίων και παρόχων.
+      parameters:
+        - name: tollOpID
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: tagOpID
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: from_date
+          in: path
+          required: true
+          schema:
+            type: string
+            format: date
+        - name: to_date
+          in: path
+          required: true
+          schema:
+            type: string
+            format: date
+      responses:
+        "200":
+          description: Επιτυχής επιστροφή κόστους διελεύσεων
           content:
             application/json:
               schema:
                 type: object
                 properties:
-                  status:
+                  tollOpID:
                     type: string
-                    example: failed
-                  info:
+                  tagOpID:
                     type: string
-                    example: Error message describing the issue
+                  nPasses:
+                    type: integer
+                  passesCost:
+                    type: number
+                    format: float
+        "400":
+          description: Μη έγκυρη ημερομηνία ή λάθος δεδομένα
+
+  /admin/tollstations:
+    get:
+      summary: Λίστα όλων των σταθμών διοδίων.
+      security:
+        - ApiKeyAuth: []
+      responses:
+        "200":
+          description: Επιτυχής ανάκτηση λίστας διοδίων
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    OpID:
+                      type: string
+                    Operator:
+                      type: string
+                    TollID:
+                      type: string
+                    Name:
+                      type: string
+                    Locality:
+                      type: string
+
+  /admin/resetpasses:
+    post:
+      summary: Διαγράφει όλες τις διελεύσεις από τη βάση.
+      security:
+        - ApiKeyAuth: []
+      responses:
+        "200":
+          description: Επιτυχής διαγραφή διελεύσεων
+        "401":
+          description: Μη έγκυρο authentication token
+
+  /admin/resetstations:
+    post:
+      summary: Διαγράφει και επανεισάγει τους σταθμούς διοδίων από αρχείο CSV.
+      security:
+        - ApiKeyAuth: []
+      responses:
+        "200":
+          description: Επιτυχής επαναφορά σταθμών
+        "400":
+          description: Σφάλμα κατά την εισαγωγή δεδομένων
+
+  /availableDates:
+    get:
+      summary: Επιστρέφει την πρώτη και τελευταία διαθέσιμη ημερομηνία διελεύσεων.
+      security:
+        - ApiKeyAuth: []
+      responses:
+        "200":
+          description: Επιτυχής ανάκτηση διαθέσιμων ημερομηνιών
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  first_date:
+                    type: string
+                  last_date:
+                    type: string
+        "404":
+          description: Δεν υπάρχουν διαθέσιμες ημερομηνίες
+
+components:
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-OBSERVATORY-AUTH
