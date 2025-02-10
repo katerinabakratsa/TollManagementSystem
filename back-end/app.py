@@ -56,7 +56,7 @@ def get_db_connection():
     return mysql.connector.connect(
         host="localhost",  # Δημόσια IP της βάσης
         user="root",       # Username της MySQL
-        password="sqlpass25*",   # Password της MySQL
+        password="alexandra",
         database="toll_management",  # Όνομα της βάσης
         charset="utf8mb4"
     )
@@ -255,8 +255,12 @@ def reset_stations():
 @app.route('/api/admin/resetpasses', methods=['POST'])
 def reset_passes():
     try:
-        if not request.headers.get("Authorization"):
-            return jsonify({"status": "failed", "info": "Missing Authorization header"}), 401
+        token = request.headers.get("X-OBSERVATORY-AUTH")  # Διορθωμένο header
+        print(f"Received token: {token}")  # Debugging
+        print(f"Stored tokens: {tokens}")  # Debugging
+        if not token or token not in tokens:
+            return jsonify({"status": "failed", "info": "Invalid or missing token"}), 401
+
 
 
         conn = get_db_connection()
