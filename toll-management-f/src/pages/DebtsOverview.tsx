@@ -1,7 +1,7 @@
 // src/pages/DebtsOverview.tsx
 import React, { useEffect, useState } from "react";
 import { Table, Button } from "react-bootstrap";
-import api from "../api/api"; // Axios instance configured in api.ts
+import api from "../api/api"; // Axios instance (configured with baseURL, headers, etc.)
 import { useNavigate } from "react-router-dom";
 
 // Interface for each daily summary
@@ -11,40 +11,30 @@ interface DailySummary {
   totalCost: number;
 }
 
-// Interface for the available dates response from the backend
+// Interface for available dates response from the backend
 interface AvailableDates {
   first_date: string;
   last_date: string;
 }
 
 const DebtsOverview: React.FC = () => {
-  // State to hold the daily summaries (one row per date)
   const [summaries, setSummaries] = useState<DailySummary[]>([]);
-  // State to manage loading and error messages
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string>("");
-
-  // Hook to navigate to the detail page
   const navigate = useNavigate();
 
-  // For demonstration purposes, we define a toll operator ID.
-  // In a real application, you would get this from the authentication context.
+  // For demonstration purposes, we use a fixed toll operator ID.
+  // In a real application, this might come from an authenticated context.
   const tollOpID = "NAO";
 
   /**
-   * Helper function to generate an array of date strings in 'YYYYMMDD'
-   * format from a start date to an end date (inclusive).
-   *
-   * @param start - The starting date string in 'YYYYMMDD' format.
-   * @param end - The ending date string in 'YYYYMMDD' format.
-   * @returns An array of date strings.
+   * Generates an array of date strings (YYYYMMDD) between start and end (inclusive).
    */
   const generateDateArray = (start: string, end: string): string[] => {
     const dates: string[] = [];
     const startYear = parseInt(start.substring(0, 4));
-    const startMonth = parseInt(start.substring(4, 6)) - 1; // JavaScript months are 0-indexed
+    const startMonth = parseInt(start.substring(4, 6)) - 1; // JS Date months are 0-indexed
     const startDay = parseInt(start.substring(6, 8));
-
     const endYear = parseInt(end.substring(0, 4));
     const endMonth = parseInt(end.substring(4, 6)) - 1;
     const endDay = parseInt(end.substring(6, 8));
@@ -65,23 +55,18 @@ const DebtsOverview: React.FC = () => {
   useEffect(() => {
     const fetchDatesAndSummaries = async () => {
       try {
-        // First, fetch the available dates from the backend
+        // Fetch available dates from the backend
         const datesResponse = await api.get("/availableDates");
         const availableDates: AvailableDates = datesResponse.data;
         const { first_date, last_date } = availableDates;
-
-        // Generate an array of dates between the first and last available dates
         const datesArray = generateDateArray(first_date, last_date);
 
-        // For each date, fetch the daily summary from the chargesBy endpoint.
-        // We use Promise.all to run all requests concurrently.
+        // For each date, fetch daily summary data from the chargesBy endpoint.
         const summaryPromises = datesArray.map(async (date) => {
           const response = await api.get(
             `/chargesBy/tollOpID/${tollOpID}/date_from/${date}/date_to/${date}`
           );
           const data = response.data;
-
-          // Compute the total passes and cost for the date by summing over the vOpList array
           let totalPasses = 0;
           let totalCost = 0;
           if (data.vOpList && Array.isArray(data.vOpList)) {
@@ -95,7 +80,6 @@ const DebtsOverview: React.FC = () => {
           return { date, totalPasses, totalCost };
         });
 
-        // Wait for all the summary promises to resolve
         const summariesData = await Promise.all(summaryPromises);
         setSummaries(summariesData);
       } catch (err: any) {
@@ -131,10 +115,10 @@ const DebtsOverview: React.FC = () => {
               <td>{summary.totalPasses}</td>
               <td>${summary.totalCost.toFixed(2)}</td>
               <td>
-                {/* Navigates to the detail view for that specific date */}
+                {/* Navigates to the Debts Per Date page */}
                 <Button
                   variant="primary"
-                  onClick={() => navigate(`/debts/${summary.date}`)}
+                  onClick={() => navigate(`/debts/date/${summary.date}`)}
                 >
                   View Details
                 </Button>

@@ -26,12 +26,17 @@ const Dashboard: React.FC = () => {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string>("");
   const [chartType, setChartType] = useState<"column" | "pie">("column");
-  const [startDate, setStartDate] = useState<Date | null>(new Date("2022-01-01"));
+  const [startDate, setStartDate] = useState<Date | null>(
+    new Date("2022-01-01")
+  );
   const [endDate, setEndDate] = useState<Date | null>(new Date("2022-12-31"));
   const [filteredPasses, setFilteredPasses] = useState<number>(0);
-  const [filteredStationsWithPasses, setFilteredStationsWithPasses] = useState<number>(0);
+  const [filteredStationsWithPasses, setFilteredStationsWithPasses] =
+    useState<number>(0);
   const [filteredTotalStations, setFilteredTotalStations] = useState<number>(0);
-  const [filteredChartData, setFilteredChartData] = useState<{ name: string; y: number }[]>([]);
+  const [filteredChartData, setFilteredChartData] = useState<
+    { name: string; y: number }[]
+  >([]);
   const [initialLoad, setInitialLoad] = useState<boolean>(true);
 
   useEffect(() => {
@@ -55,7 +60,9 @@ const Dashboard: React.FC = () => {
 
         setTollStations(stationsResponse.data);
 
-        const uniqueOperators = Array.from(new Set(stationsResponse.data.map((ts: TollStation) => ts.OpID)));
+        const uniqueOperators = Array.from(
+          new Set(stationsResponse.data.map((ts: TollStation) => ts.OpID))
+        );
         setOperators(uniqueOperators);
         setSelectedOperator(uniqueOperators[0] || "");
 
@@ -81,7 +88,18 @@ const Dashboard: React.FC = () => {
         return;
       }
 
-      const headers = { headers: { "X-OBSERVATORY-AUTH": token } };
+      const headers = {
+        headers: {
+          "X-OBSERVATORY-AUTH": token,
+          "Content-Type": "application/json",
+        },
+        withCredentials: true, // Ensures cookies/tokens are sent
+      };
+
+      const response = await api.get(
+        `/api/chargesBy/tollOpID/${tollOpID}/date_from/${date}/date_to/${date}`,
+        headers
+      );
 
       if (!selectedOperator) {
         setError("Please select an operator.");
@@ -91,8 +109,12 @@ const Dashboard: React.FC = () => {
 
       console.log("Fetching data for operator:", selectedOperator);
 
-      const formattedStart = startDate ? startDate.toISOString().split("T")[0].replace(/-/g, "") : "20220101";
-      const formattedEnd = endDate ? endDate.toISOString().split("T")[0].replace(/-/g, "") : "20221231";
+      const formattedStart = startDate
+        ? startDate.toISOString().split("T")[0].replace(/-/g, "")
+        : "20220101";
+      const formattedEnd = endDate
+        ? endDate.toISOString().split("T")[0].replace(/-/g, "")
+        : "20221231";
 
       const passesResponse = await api.get(
         `/passAnalysis/stationOpID/${selectedOperator}/tagOpID/${selectedOperator}/date_from/${formattedStart}/date_to/${formattedEnd}`,
@@ -109,17 +131,19 @@ const Dashboard: React.FC = () => {
         passesPerToll[stationID] = (passesPerToll[stationID] || 0) + 1;
       });
 
-      const updatedChartData = Object.keys(passesPerToll).map(stationID => ({
-        name: tollStations.find(ts => ts.TollID === stationID)?.Name || stationID,
+      const updatedChartData = Object.keys(passesPerToll).map((stationID) => ({
+        name:
+          tollStations.find((ts) => ts.TollID === stationID)?.Name || stationID,
         y: passesPerToll[stationID] || 0,
       }));
 
       setFilteredChartData(updatedChartData);
       setFilteredStationsWithPasses(updatedChartData.length);
 
-      const stationsForSelectedOperator = tollStations.filter(ts => ts.OpID === selectedOperator);
+      const stationsForSelectedOperator = tollStations.filter(
+        (ts) => ts.OpID === selectedOperator
+      );
       setFilteredTotalStations(stationsForSelectedOperator.length);
-
     } catch (err: any) {
       setError("Failed to fetch data.");
       console.error("API error:", err);
@@ -129,13 +153,14 @@ const Dashboard: React.FC = () => {
     }
   };
 
-  if (loading && initialLoad) return <div className="container mt-5">Loading...</div>;
+  if (loading && initialLoad)
+    return <div className="container mt-5">Loading...</div>;
   if (error) return <div className="container mt-5 text-danger">{error}</div>;
 
   const chartOptions = {
     chart: { type: chartType },
     title: { text: "" },
-    xAxis: { categories: filteredChartData.map(data => data.name) },
+    xAxis: { categories: filteredChartData.map((data) => data.name) },
     yAxis: { title: { text: "Διελεύσεις" } },
     series: [{ name: "Διελεύσεις", data: filteredChartData }],
   };
@@ -145,9 +170,14 @@ const Dashboard: React.FC = () => {
       <Row className="mt-4 justify-content-center">
         <Col md={4}>
           <h5>Επιλογή Εταιρείας Διοδίων</h5>
-          <Form.Select value={selectedOperator} onChange={(e) => setSelectedOperator(e.target.value)}>
+          <Form.Select
+            value={selectedOperator}
+            onChange={(e) => setSelectedOperator(e.target.value)}
+          >
             {operators.map((op) => (
-              <option key={op} value={op}>{op}</option>
+              <option key={op} value={op}>
+                {op}
+              </option>
             ))}
           </Form.Select>
         </Col>
@@ -156,15 +186,27 @@ const Dashboard: React.FC = () => {
       <Row className="mt-4 justify-content-between">
         <Col md={4}>
           <h5>Ημερομηνία Έναρξης</h5>
-          <DatePicker selected={startDate} onChange={(date) => setStartDate(date)} dateFormat="yyyy-MM-dd" />
+          <DatePicker
+            selected={startDate}
+            onChange={(date) => setStartDate(date)}
+            dateFormat="yyyy-MM-dd"
+          />
         </Col>
         <Col md={4}>
           <h5>Ημερομηνία Λήξης</h5>
-          <DatePicker selected={endDate} onChange={(date) => setEndDate(date)} dateFormat="yyyy-MM-dd" />
+          <DatePicker
+            selected={endDate}
+            onChange={(date) => setEndDate(date)}
+            dateFormat="yyyy-MM-dd"
+          />
         </Col>
       </Row>
 
-      <Button variant="success" className="mt-3 apply-filters-button" onClick={fetchData}>
+      <Button
+        variant="success"
+        className="mt-3 apply-filters-button"
+        onClick={fetchData}
+      >
         Εφαρμογή Φίλτρων
       </Button>
 
@@ -172,7 +214,8 @@ const Dashboard: React.FC = () => {
         <Col md={4}>
           <Card className="dashboard-summary-card">
             <h5>Σύνολο Σταθμών</h5>
-            <h2>{filteredTotalStations}</h2> {/* Μόνο όταν πατιέται το κουμπί */}
+            <h2>{filteredTotalStations}</h2>{" "}
+            {/* Μόνο όταν πατιέται το κουμπί */}
           </Card>
         </Col>
         <Col md={4}>
@@ -191,10 +234,17 @@ const Dashboard: React.FC = () => {
 
       <div className="mt-4">
         <h5>Τύπος Γραφήματος</h5>
-        <Button variant={chartType === "column" ? "primary" : "outline-primary"} onClick={() => setChartType("column")} className="me-2">
+        <Button
+          variant={chartType === "column" ? "primary" : "outline-primary"}
+          onClick={() => setChartType("column")}
+          className="me-2"
+        >
           Διάγραμμα Στηλών
         </Button>
-        <Button variant={chartType === "pie" ? "primary" : "outline-secondary"} onClick={() => setChartType("pie")}>
+        <Button
+          variant={chartType === "pie" ? "primary" : "outline-secondary"}
+          onClick={() => setChartType("pie")}
+        >
           Διάγραμμα Πίτας
         </Button>
       </div>
@@ -205,3 +255,214 @@ const Dashboard: React.FC = () => {
 };
 
 export default Dashboard;
+// import React, { useContext, useEffect, useState } from "react";
+// import { Row, Col, Button, Container, Card, Form } from "react-bootstrap";
+// import { useParams } from "react-router-dom";
+// import { AppContext } from "../context/AppContext";
+// import Highcharts from "highcharts";
+// import HighchartsReact from "highcharts-react-official";
+// import api from "../api/api";
+// import DatePicker from "react-datepicker";
+// import "react-datepicker/dist/react-datepicker.css";
+
+// // Define Types
+// interface Pass {
+//   stationID: string;
+// }
+
+// interface TollStation {
+//   TollID: string;
+//   Name: string;
+//   OpID: string;
+// }
+
+// const Dashboard: React.FC = () => {
+//   const { isAuthenticated } = useContext(AppContext);
+//   const { tollOpID, date } = useParams<{ tollOpID?: string; date?: string }>();
+
+//   // Ensure URL params are defined before proceeding
+//   if (!tollOpID || !date) {
+//     return (
+//       <div className="container mt-5 text-danger">
+//         Missing required parameters.
+//       </div>
+//     );
+//   }
+
+//   // State Variables
+//   const [passes, setPasses] = useState<Pass[]>([]);
+//   const [tollStations, setTollStations] = useState<TollStation[]>([]);
+//   const [operators, setOperators] = useState<string[]>([]);
+//   const [selectedOperator, setSelectedOperator] = useState<string>("");
+//   const [loading, setLoading] = useState<boolean>(true);
+//   const [error, setError] = useState<string>("");
+//   const [chartType, setChartType] = useState<"column" | "pie">("column");
+//   const [startDate, setStartDate] = useState<Date | null>(
+//     new Date("2022-01-01")
+//   );
+//   const [endDate, setEndDate] = useState<Date | null>(new Date("2022-12-31"));
+//   const [filteredPasses, setFilteredPasses] = useState<number>(0);
+//   const [filteredStationsWithPasses, setFilteredStationsWithPasses] =
+//     useState<number>(0);
+//   const [filteredTotalStations, setFilteredTotalStations] = useState<number>(0);
+//   const [filteredChartData, setFilteredChartData] = useState<
+//     { name: string; y: number }[]
+//   >([]);
+//   const [initialLoad, setInitialLoad] = useState<boolean>(true);
+
+//   useEffect(() => {
+//     const fetchOperators = async () => {
+//       try {
+//         const token = localStorage.getItem("authToken");
+//         if (!token) {
+//           setError("No authentication token found.");
+//           setLoading(false);
+//           return;
+//         }
+
+//         const headers = { headers: { "X-OBSERVATORY-AUTH": token } };
+//         const stationsResponse = await api.get("/admin/tollstations", headers);
+
+//         if (!stationsResponse.data || stationsResponse.data.length === 0) {
+//           setError("No toll stations found.");
+//           setLoading(false);
+//           return;
+//         }
+
+//         setTollStations(stationsResponse.data);
+
+//         const uniqueOperators = Array.from(
+//           new Set(stationsResponse.data.map((ts: TollStation) => ts.OpID))
+//         );
+//         setOperators(uniqueOperators);
+//         setSelectedOperator(uniqueOperators[0] || "");
+
+//         setLoading(false);
+//       } catch (err: any) {
+//         setError("Failed to fetch operators.");
+//         console.error("API error:", err);
+//         setLoading(false);
+//       }
+//     };
+
+//     fetchOperators();
+//   }, []);
+
+//   const fetchData = async () => {
+//     try {
+//       setLoading(true);
+//       const token = localStorage.getItem("authToken");
+
+//       if (!token) {
+//         setError("No authentication token found.");
+//         setLoading(false);
+//         return;
+//       }
+
+//       const headers = {
+//         headers: {
+//           "X-OBSERVATORY-AUTH": token,
+//           "Content-Type": "application/json",
+//         },
+//       };
+
+//       if (!tollOpID || !date) {
+//         setError("Missing required parameters.");
+//         setLoading(false);
+//         return;
+//       }
+
+//       console.log("Fetching data for operator:", selectedOperator);
+
+//       const formattedStart = startDate
+//         ? startDate.toISOString().split("T")[0].replace(/-/g, "")
+//         : "20220101";
+//       const formattedEnd = endDate
+//         ? endDate.toISOString().split("T")[0].replace(/-/g, "")
+//         : "20221231";
+
+//       const response = await api.get(
+//         `/passAnalysis/stationOpID/${selectedOperator}/tagOpID/${selectedOperator}/date_from/${formattedStart}/date_to/${formattedEnd}`,
+//         headers
+//       );
+
+//       if (!response || !response.data) {
+//         setError("No data returned from server.");
+//         setLoading(false);
+//         return;
+//       }
+
+//       const newPasses = response.data?.[0]?.passList || [];
+//       setPasses(newPasses);
+//       setFilteredPasses(newPasses.length);
+
+//       const passesPerToll: { [key: string]: number } = {};
+//       newPasses.forEach((pass) => {
+//         const stationID = pass.stationID;
+//         passesPerToll[stationID] = (passesPerToll[stationID] || 0) + 1;
+//       });
+
+//       const updatedChartData = Object.keys(passesPerToll).map((stationID) => ({
+//         name:
+//           tollStations.find((ts) => ts.TollID === stationID)?.Name || stationID,
+//         y: passesPerToll[stationID] || 0,
+//       }));
+
+//       setFilteredChartData(updatedChartData);
+//       setFilteredStationsWithPasses(updatedChartData.length);
+//       setFilteredTotalStations(
+//         tollStations.filter((ts) => ts.OpID === selectedOperator).length
+//       );
+//     } catch (err: any) {
+//       setError("Failed to fetch data.");
+//       console.error("API error:", err);
+//     } finally {
+//       setLoading(false);
+//       setInitialLoad(false);
+//     }
+//   };
+
+//   if (loading && initialLoad)
+//     return <div className="container mt-5">Loading...</div>;
+//   if (error) return <div className="container mt-5 text-danger">{error}</div>;
+
+//   const chartOptions = {
+//     chart: { type: chartType },
+//     title: { text: "" },
+//     xAxis: { categories: filteredChartData.map((data) => data.name) },
+//     yAxis: { title: { text: "Διελεύσεις" } },
+//     series: [{ name: "Διελεύσεις", data: filteredChartData }],
+//   };
+
+//   return (
+//     <Container className="mt-5 text-center dashboard-container">
+//       <Row className="mt-4 justify-content-center">
+//         <Col md={4}>
+//           <h5>Επιλογή Εταιρείας Διοδίων</h5>
+//           <Form.Select
+//             value={selectedOperator}
+//             onChange={(e) => setSelectedOperator(e.target.value)}
+//           >
+//             {operators.map((op) => (
+//               <option key={op} value={op}>
+//                 {op}
+//               </option>
+//             ))}
+//           </Form.Select>
+//         </Col>
+//       </Row>
+
+//       <Button
+//         variant="success"
+//         className="mt-3 apply-filters-button"
+//         onClick={fetchData}
+//       >
+//         Εφαρμογή Φίλτρων
+//       </Button>
+
+//       <HighchartsReact highcharts={Highcharts} options={chartOptions} />
+//     </Container>
+//   );
+// };
+
+// export default Dashboard;

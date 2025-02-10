@@ -19,6 +19,8 @@ app = Flask(__name__)
 #extra added for frontend
 # Σωστή ρύθμιση CORS
 CORS(app, resources={r"/api/*": {"origins": "*"}}, supports_credentials=True)
+#CORS(app, resources={r"/api/*": {"origins": "https://localhost:5173"}}, supports_credentials=True)
+
 
 @app.after_request
 def add_cors_headers(response):
@@ -54,7 +56,7 @@ def get_db_connection():
     return mysql.connector.connect(
         host="localhost",  # Δημόσια IP της βάσης
         user="root",       # Username της MySQL
-        password="alexandra",   # Password της MySQL
+        password="sqlpass25*",   # Password της MySQL
         database="toll_management",  # Όνομα της βάσης
         charset="utf8mb4"
     )

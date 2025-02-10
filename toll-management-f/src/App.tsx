@@ -11,12 +11,10 @@ import Home from "./pages/Home";
 import Dashboard from "./pages/Dashboard";
 import MapPage from "./pages/MapPage";
 import DebtsOverview from "./pages/DebtsOverview";
-import DebtsDetail from "./pages/DebtsDetails";
 import Crossings from "./pages/Crossings";
-
-import DebtsOverviewTroubleshoot from "./pages/DebtsOverviewTroubleshoot";
-import DebtsOverviewSingleDate from "./pages/DebtsOverviewSingleDate";
-
+import DebtsPerDate from "./pages/DebtsPerDate";
+import CompanySpecificDebt from "./pages/CompanySpecificDebt";
+import History from "./pages/History";
 import PrivateRoute from "./components/PrivateRoute";
 import NavbarComponent from "./components/NavbarComponent"; // Optional: Create a Navbar
 
@@ -34,7 +32,12 @@ const App: React.FC = () => {
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/map" element={<MapPage />} />
           <Route path="/debts" element={<DebtsOverview />} />
-          <Route path="/debts/:data" element={<DebtsDetail />} />
+          <Route path="/debts/date/:date" element={<DebtsPerDate />} />
+          <Route
+            path="/debts/date/:date/company/:company"
+            element={<CompanySpecificDebt />}
+          />
+          <Route path="/history" element={<History />} />
           <Route path="/crossings" element={<Crossings />} />
         </Route>
 
