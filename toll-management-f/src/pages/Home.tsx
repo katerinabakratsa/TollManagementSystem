@@ -45,9 +45,7 @@ const Home: React.FC = () => {
         { title: "Προβολή Οφειλών", description: "Σελίδα με τις οικονομικές συναλλαγές και τα χρέη/οφειλές.", icon: <FaMoneyBill />, path: "/debts" },
         { title: "Ανάλυση Δεδομένων", description: "Ενότητα με γραφήματα και στατιστικά δεδομένα.", icon: <FaChartBar />, path: "/dashboard" },
         { title: "Ιστορικό", description: "Πρόσβαση σε παλαιότερες εγγραφές διελεύσεων και συναλλαγών.", icon: <FaHistory />, path: "/history" },
-        { title: "Ειδοποιήσεις", description: "Σελίδα όπου ο χρήστης βλέπει μηνύματα και ειδοποιήσεις συστήματος.", icon: <FaBell />, path: "/notifications" },
-        { title: "Χάρτης", description: "Σελίδα όπου ο χρήστης βλέπει μηνύματα και ειδοποιήσεις συστήματος.", icon: <FaMap />, path: "/map" },
-    ];
+     ];
 
     return (
         <Container className="mt-5 text-center">
