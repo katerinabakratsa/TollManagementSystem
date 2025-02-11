@@ -1,132 +1,264 @@
 // src/pages/DebtsOverview.tsx
 import React, { useEffect, useState } from "react";
-import { Table, Button } from "react-bootstrap";
+import { Table, Button, Form, Modal } from "react-bootstrap";
 import api from "../api/api"; // Axios instance (configured with baseURL, headers, etc.)
 import { useNavigate } from "react-router-dom";
 
-// Interface for each daily summary
-interface DailySummary {
-  date: string;
-  totalPasses: number;
-  totalCost: number;
-}
-
-// Interface for available dates response from the backend
-interface AvailableDates {
-  first_date: string;
-  last_date: string;
+interface Debt {
+  id: number;
+  record_date: string;
+  company_name: string;
+  creditor_company: string;
+  amount_owed: number;
+  is_paid: boolean;
+  can_pay: boolean;
 }
 
 const DebtsOverview: React.FC = () => {
-  const [summaries, setSummaries] = useState<DailySummary[]>([]);
+  const [debts, setDebts] = useState<Debt[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string>("");
+  const [selectedCompany, setSelectedCompany] = useState<string>("");
+  const [selectedCreditor, setSelectedCreditor] = useState<string>("");
+  const [selectedStatus, setSelectedStatus] = useState<string>("");
+  const [startDate, setStartDate] = useState<string>("");
+  const [endDate, setEndDate] = useState<string>("");
+  const [selectedDebt, setSelectedDebt] = useState<Debt | null>(null);
+  const [showModal, setShowModal] = useState<boolean>(false);
+  const username = localStorage.getItem("authUsername") || ""; // Το username ισούται με το OpId
   const navigate = useNavigate();
 
-  // For demonstration purposes, we use a fixed toll operator ID.
-  // In a real application, this might come from an authenticated context.
-  const tollOpID = "NAO";
+  useEffect(() => {
+    fetchDebts();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
-  /**
-   * Generates an array of date strings (YYYYMMDD) between start and end (inclusive).
-   */
-  const generateDateArray = (start: string, end: string): string[] => {
-    const dates: string[] = [];
-    const startYear = parseInt(start.substring(0, 4));
-    const startMonth = parseInt(start.substring(4, 6)) - 1; // JS Date months are 0-indexed
-    const startDay = parseInt(start.substring(6, 8));
-    const endYear = parseInt(end.substring(0, 4));
-    const endMonth = parseInt(end.substring(4, 6)) - 1;
-    const endDay = parseInt(end.substring(6, 8));
+  const fetchDebts = async () => {
+    try {
+      const token = localStorage.getItem("authToken");
+      if (!token) {
+        setError("No authentication token found.");
+        setLoading(false);
+        return;
+      }
 
-    let currentDate = new Date(startYear, startMonth, startDay);
-    const endDate = new Date(endYear, endMonth, endDay);
+      const headers = { headers: { "X-OBSERVATORY-AUTH": token } };
+      let queryParams = new URLSearchParams();
 
-    while (currentDate <= endDate) {
-      const year = currentDate.getFullYear();
-      const month = ("0" + (currentDate.getMonth() + 1)).slice(-2);
-      const day = ("0" + currentDate.getDate()).slice(-2);
-      dates.push(`${year}${month}${day}`);
-      currentDate.setDate(currentDate.getDate() + 1);
+      if (selectedCompany) queryParams.append("company", selectedCompany);
+      if (selectedCreditor) queryParams.append("creditor", selectedCreditor);
+      if (selectedStatus) queryParams.append("is_paid", selectedStatus);
+      if (startDate) queryParams.append("start_date", startDate);
+      if (endDate) queryParams.append("end_date", endDate);
+
+      const response = await api.get(`/admin/debts?${queryParams.toString()}`, headers);
+      console.log("🔹 API Response:", response.data); // Δες αν το can_pay έρχεται σωστά
+      setDebts(Array.isArray(response.data) ? response.data : []);
+    } catch (err: any) {
+      console.error("Error fetching debts:", err.response ? err.response.data : err.message);
+      setError("Failed to fetch debts.");
+    } finally {
+      setLoading(false);
     }
-    return dates;
   };
 
-  useEffect(() => {
-    const fetchDatesAndSummaries = async () => {
-      try {
-        // Fetch available dates from the backend
-        const datesResponse = await api.get("/availableDates");
-        const availableDates: AvailableDates = datesResponse.data;
-        const { first_date, last_date } = availableDates;
-        const datesArray = generateDateArray(first_date, last_date);
-
-        // For each date, fetch daily summary data from the chargesBy endpoint.
-        const summaryPromises = datesArray.map(async (date) => {
-          const response = await api.get(
-            `/chargesBy/tollOpID/${tollOpID}/date_from/${date}/date_to/${date}`
-          );
-          const data = response.data;
-          let totalPasses = 0;
-          let totalCost = 0;
-          if (data.vOpList && Array.isArray(data.vOpList)) {
-            data.vOpList.forEach(
-              (item: { nPasses: number; passesCost: number }) => {
-                totalPasses += item.nPasses;
-                totalCost += item.passesCost;
-              }
-            );
-          }
-          return { date, totalPasses, totalCost };
-        });
-
-        const summariesData = await Promise.all(summaryPromises);
-        setSummaries(summariesData);
-      } catch (err: any) {
-        console.error("Error fetching available dates or daily summaries", err);
-        setError("Failed to fetch available dates or daily summaries.");
-      } finally {
-        setLoading(false);
+  const handlePayDebt = async () => {
+    if (!selectedDebt) return;
+    try {
+      const token = localStorage.getItem("authToken");
+      if (!token) {
+        setError("No authentication token found.");
+        return;
       }
-    };
 
-    fetchDatesAndSummaries();
-  }, [tollOpID]);
+      const headers = { headers: { "X-OBSERVATORY-AUTH": token } };
+      const response = await api.put(`/admin/debts/${selectedDebt.id}/pay`, {}, headers);
 
-  if (loading) return <div className="container mt-5">Loading...</div>;
-  if (error) return <div className="container mt-5 text-danger">{error}</div>;
+      if (response.status === 200) {
+        const updatedDebt = response.data;
+        setDebts((prevDebts) =>
+          prevDebts.map((debt) =>
+            debt.id === updatedDebt.id
+              ? { ...debt, is_paid: true, can_pay: false } // Αλλαγή στο UI
+              : debt
+          )
+        );
+      }
+
+      setShowModal(false);
+    } catch (err: any) {
+      console.error("Error updating debt:", err.response ? err.response.data : err.message);
+      setError("Failed to update debt.");
+    }
+  };
+
+// -------------------------------------------------
+  // Συγκεντρώνουμε τις μοναδικές τιμές που υπάρχουν
+  // -------------------------------------------------
+  const allDebtors = Array.from(new Set(debts.map((d) => d.company_name)));
+  const allCreditors = Array.from(new Set(debts.map((d) => d.creditor_company)));
+
+  // Για να ξεκινήσουμε, οι λίστες μας είναι οι “full” λίστες
+  let filteredCompanies = [...allDebtors];
+  let filteredCreditors = [...allCreditors];
+
+  // -------------------------------------------------
+  // Αν είμαστε admin, δεν βάζουμε κανέναν περιορισμό.
+  // Αν δεν είμαστε admin, εφαρμόζουμε την επιθυμητή λογική:
+  // -------------------------------------------------
+  if (username !== "admin") {
+    // *** 1) Φιλτράρισμα με βάση την επιλογή Πιστώτριας ***
+    if (selectedCreditor) {
+      if (selectedCreditor === username) {
+        // Ο χρήστης έχει βάλει τον εαυτό του ως πιστώτρια εταιρεία
+        // => Στο άλλο φίλτρο (ετ. που χρωστάει) μένουν ΟΛΕΣ οι υπόλοιπες
+        //    εκτός από τον ίδιο τον user. (Κι εννοείται έχουμε πάντα <option value="">Όλες</option>)
+        filteredCompanies = filteredCompanies.filter((c) => c !== username);
+      } else {
+        // Ο χρήστης διάλεξε μία άλλη εταιρεία σαν πιστώτρια
+        // => Άρα ο user είναι ο μοναδικός που μπορεί να χρωστάει
+        //    (μαζί με την "" = Όλες στο dropdown, αλλά η μόνη πραγματική τιμή είναι ο user)
+        filteredCompanies = [username];
+      }
+    }
+
+    // *** 2) Φιλτράρισμα με βάση την επιλογή Εταιρείας που Χρωστάει ***
+    if (selectedCompany) {
+      if (selectedCompany === username) {
+        // Ο χρήστης έχει βάλει τον εαυτό του ως Εταιρεία που Χρωστάει
+        // => Στο άλλο φίλτρο (πιστώτρια) μένουν όλες οι υπόλοιπες
+        //    εκτός από τον user.
+        filteredCreditors = filteredCreditors.filter((cr) => cr !== username);
+      } else {
+        // Ο χρήστης διάλεξε μία άλλη εταιρεία σαν οφειλέτη
+        // => Τότε ο user είναι ο μόνος πιστωτής
+        filteredCreditors = [username];
+      }
+    }
+  }
+
 
   return (
     <div className="container mt-5">
       <h1 className="mb-4">Debts Overview</h1>
+      <div className="mb-4">
+        <Form.Group controlId="companySelect" className="mb-3">
+          <Form.Label>Εταιρεία που Χρωστάει</Form.Label>
+          <Form.Select
+            value={selectedCompany}
+            onChange={(e) => setSelectedCompany(e.target.value)}
+          >
+            <option value="">Όλες</option>
+            {filteredCompanies.map((company) => (
+              <option key={company} value={String(company)}>{String(company)}</option>
+            ))}
+          </Form.Select>
+        </Form.Group>
+
+        <Form.Group controlId="creditorSelect" className="mb-3">
+          <Form.Label>Πιστώτρια Εταιρεία</Form.Label>
+          <Form.Select
+            value={selectedCreditor}
+            onChange={(e) => setSelectedCreditor(e.target.value)}
+          >
+            <option value="">Όλες</option>
+            {filteredCreditors.map((creditor) => (
+              <option key={creditor} value={String(creditor)}>{String(creditor)}</option>
+            ))}
+          </Form.Select>
+        </Form.Group>
+
+        <Form.Group controlId="statusSelect" className="mb-3">
+          <Form.Label>Κατάσταση Οφειλής</Form.Label>
+          <Form.Select
+            value={selectedStatus}
+            onChange={(e) => setSelectedStatus(e.target.value)}
+          >
+            <option value="">Όλα</option>
+            <option value="true">Εξοφλήθηκε</option>
+            <option value="false">Εκκρεμεί</option>
+          </Form.Select>
+        </Form.Group>
+
+        <Form.Group controlId="startDate" className="mb-3">
+          <Form.Label>Ημερομηνία Έναρξης</Form.Label>
+          <Form.Control
+            type="date"
+            value={startDate}
+            onChange={(e) => setStartDate(e.target.value)}
+          />
+        </Form.Group>
+
+        <Form.Group controlId="endDate" className="mb-3">
+          <Form.Label>Ημερομηνία Λήξης</Form.Label>
+          <Form.Control
+            type="date"
+            value={endDate}
+            onChange={(e) => setEndDate(e.target.value)}
+          />
+        </Form.Group>
+
+        <Button onClick={fetchDebts} variant="primary">
+          Εφαρμογή Φίλτρων
+        </Button>
+      </div>
+
+      {/* Πίνακας Οφειλών */}
       <Table striped bordered hover responsive>
         <thead>
           <tr>
-            <th>Date</th>
-            <th>Total Passes</th>
-            <th>Total Cost</th>
-            <th>Actions</th>
+            <th>Ημερομηνία</th>
+            <th>Εταιρεία που Χρωστάει</th>
+            <th>Πιστώτρια Εταιρεία</th>
+            <th>Ποσό (€)</th>
+            <th>Κατάσταση</th>
           </tr>
         </thead>
         <tbody>
-          {summaries.map((summary, index) => (
-            <tr key={index}>
-              <td>{summary.date}</td>
-              <td>{summary.totalPasses}</td>
-              <td>${summary.totalCost.toFixed(2)}</td>
+          {debts.map((debt) => (
+            <tr key={debt.id}>
+              <td>{new Date(debt.record_date).toLocaleDateString()}</td>
+              <td>{debt.company_name}</td>
+              <td>{debt.creditor_company}</td>
+              <td>{debt.amount_owed ? `${Number(debt.amount_owed).toFixed(2)} €` : "N/A"}</td>
               <td>
-                {/* Navigates to the Debts Per Date page */}
-                <Button
-                  variant="primary"
-                  onClick={() => navigate(`/debts/date/${summary.date}`)}
-                >
-                  View Details
-                </Button>
+                {debt.is_paid ? (
+                  <span className="text-success">Εξοφλήθηκε</span>
+                ) : debt.can_pay ? (
+                  <Button
+                    variant="warning"
+                    onClick={() => {
+                      console.log("Button clicked", debt);
+                      setSelectedDebt(debt);
+                      setShowModal(true);
+                    }}
+                  >
+                    Πληρωμή
+                  </Button>
+                ) : (
+                  <span className="text-danger">Εκκρεμεί</span>
+                )}
               </td>
             </tr>
           ))}
         </tbody>
       </Table>
+
+      {/* Μόνταλ Επιβεβαίωσης Πληρωμής */}
+      <Modal show={showModal} onHide={() => setShowModal(false)}>
+        <Modal.Header closeButton>
+          <Modal.Title>Επιβεβαίωση Πληρωμής</Modal.Title>
+        </Modal.Header>
+        <Modal.Body>Είστε σίγουροι ότι θέλετε να εξοφλήσετε αυτή την οφειλή;</Modal.Body>
+        <Modal.Footer>
+          <Button variant="secondary" onClick={() => setShowModal(false)}>
+            Ακύρωση
+          </Button>
+          <Button variant="primary" onClick={handlePayDebt}>
+            Ναι, Πληρωμή
+          </Button>
+        </Modal.Footer>
+      </Modal>
     </div>
   );
 };

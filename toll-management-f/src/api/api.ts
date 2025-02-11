@@ -4,7 +4,7 @@ const api = axios.create({
   baseURL: "https://localhost:9115/api",
   withCredentials: true, // Include cookies in requests
   headers: {
-    "Content-Type": "multipart/form-data", // Default content type
+    "Content-Type": "application.json", // Default content type
   },
 });
 
@@ -13,6 +13,16 @@ const token = localStorage.getItem("authToken");
 if (token) {
   api.defaults.headers.common["X-OBSERVATORY-AUTH"] = token;
 }
+
+
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem("authToken");
+  if (token) {
+    config.headers["X-OBSERVATORY-AUTH"] = token;
+  }
+  return config;
+});
+
 
 // Response interceptor to handle global errors
 api.interceptors.response.use(

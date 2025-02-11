@@ -32,7 +32,7 @@ const App: React.FC = () => {
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/map" element={<MapPage />} />
           <Route path="/debts" element={<DebtsOverview />} />
-          <Route path="/debts/date/:date" element={<DebtsPerDate />} />
+          <Route path="/debts/date/:tollOpID" element={<DebtsPerDate />} />
           <Route
             path="/debts/date/:date/company/:company"
             element={<CompanySpecificDebt />}
