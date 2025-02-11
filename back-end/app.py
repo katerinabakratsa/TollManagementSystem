@@ -56,7 +56,12 @@ def get_db_connection():
     return mysql.connector.connect(
         host="localhost",  # Δημόσια IP της βάσης
         user="root",       # Username της MySQL
+<<<<<<< Updated upstream
         password="alexandra",
+=======
+        password="Ddffgg456",   # Password της MySQL
+        port=3006,
+>>>>>>> Stashed changes
         database="toll_management",  # Όνομα της βάσης
         charset="utf8mb4"
     )
@@ -789,6 +794,123 @@ def get_available_dates():
 
     except Exception as e:
         print(f"Error occurred: {e}")
+        return jsonify({"status": "failed", "info": str(e)}), 500
+@app.route('/api/admin/debts', methods=['GET'])
+def get_all_debts():
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+        
+        # Διαβάζουμε το authentication token
+        token = request.headers.get("X-OBSERVATORY-AUTH")
+        if not token or token not in tokens:
+            return jsonify({"status": "failed", "info": "Unauthorized"}), 401
+
+        username = tokens[token]  # Το username είναι το ίδιο με το OpId (εκτός του admin)
+
+        # Ανάγνωση παραμέτρων από το request
+        company = request.args.get('company', default=None, type=str)
+        creditor = request.args.get('creditor', default=None, type=str)
+        is_paid = request.args.get('is_paid', default=None, type=str)
+        start_date = request.args.get('start_date', default=None, type=str)
+        end_date = request.args.get('end_date', default=None, type=str)
+
+        # Βασικό SQL Query
+        query = "SELECT * FROM daily_debts WHERE 1=1"
+        params = []
+        
+        # Αν δεν είναι ο admin, βλέπει όλες τις οφειλές που τον αφορούν, είτε τις χρωστάει είτε του τις χρωστάνε
+        if username != "admin":
+            query += " AND (company_name = %s OR creditor_company = %s)"
+            params.extend([username, username])  # Βλέπει οφειλές που χρωστάει ή του χρωστάνε
+
+        if company:
+            query += " AND company_name = %s"
+            params.append(company)
+
+        if creditor:
+            query += " AND creditor_company = %s"
+            params.append(creditor)
+
+        if is_paid is not None:
+            query += " AND is_paid = %s"
+            params.append(is_paid.lower() == "true")
+
+        if start_date:
+            try:
+                start_date_obj = datetime.strptime(start_date, "%Y-%m-%d")
+                query += " AND record_date >= %s"
+                params.append(start_date_obj)
+            except ValueError:
+                return jsonify({"status": "failed", "info": "Invalid start_date format. Use YYYY-MM-DD"}), 400
+
+        if end_date:
+            try:
+                end_date_obj = datetime.strptime(end_date, "%Y-%m-%d")
+                query += " AND record_date <= %s"
+                params.append(end_date_obj)
+            except ValueError:
+                return jsonify({"status": "failed", "info": "Invalid end_date format. Use YYYY-MM-DD"}), 400
+
+        # Εκτέλεση δυναμικού SQL query
+        cursor.execute(query, tuple(params))
+        debts = cursor.fetchall()
+
+        # Μετατροπή του amount_owed σε float και προσθήκη πεδίου πληρωμής
+        for debt in debts:
+            debt["amount_owed"] = float(debt["amount_owed"])
+            debt["can_pay"] = (debt["company_name"] == username and not debt["is_paid"])  # ✅ Μόνο αν ο χρήστης χρωστάει και δεν έχει πληρωθεί
+
+        cursor.close()
+        conn.close()
+
+        return jsonify(debts), 200
+
+    except Exception as e:
+        return jsonify({"status": "failed", "info": str(e)}), 500
+
+
+
+@app.route('/api/admin/debts/<int:debt_id>/pay', methods=['PUT'])
+def pay_debt(debt_id):
+    try:
+        conn = get_db_connection()
+        cursor = conn.cursor()
+
+        # Διαβάζουμε το authentication token
+        token = request.headers.get("X-OBSERVATORY-AUTH")
+        if not token or token not in tokens:
+            return jsonify({"status": "failed", "info": "Unauthorized"}), 401
+
+        username = tokens[token]  # Το username = OpId (εκτός του admin)
+
+        # Ελέγχουμε αν η οφειλή ανήκει στον χρήστη που είναι συνδεδεμένος
+        cursor.execute("SELECT company_name, is_paid FROM daily_debts WHERE id = %s", (debt_id,))
+        debt = cursor.fetchone()
+
+        if not debt:
+            return jsonify({"status": "failed", "info": "Debt not found"}), 404
+
+        if username != debt[0]:  # ✅ Επιτρέπεται μόνο αν ο χρήστης είναι ο οφειλέτης
+            return jsonify({"status": "failed", "info": "Permission denied"}), 403
+
+        if debt[1] == 1:  # Αν η οφειλή είναι ήδη εξοφλημένη, δεν κάνουμε αλλαγή
+            return jsonify({"status": "failed", "info": "Debt already paid"}), 400
+
+        # Ενημέρωση της οφειλής ως εξοφλημένη
+        cursor.execute("UPDATE daily_debts SET is_paid = 1 WHERE id = %s", (debt_id,))
+        conn.commit()
+
+        # Επιστρέφουμε την ενημερωμένη οφειλή
+        cursor.execute("SELECT * FROM daily_debts WHERE id = %s", (debt_id,))
+        updated_debt = cursor.fetchone()
+
+        cursor.close()
+        conn.close()
+
+        return jsonify(updated_debt), 200
+
+    except Exception as e:
         return jsonify({"status": "failed", "info": str(e)}), 500
 
 # Εκκίνηση της εφαρμογής
