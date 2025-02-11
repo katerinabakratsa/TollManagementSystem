@@ -36,6 +36,8 @@ const LoginForm: React.FC = () => {
 
       if (response.data.status === "OK" && response.data.token) {
         login(response.data.token);
+        // ✅ Αποθηκεύουμε το OpID του χρήστη στο localStorage
+        localStorage.setItem("OpID", response.data.OpID); // "null" για admin, αλλιώς user ID
         setError(null); // ✅ Αφαιρούμε το error ΜΟΝΟ αν γίνει επιτυχές login
         navigate("/");
       } else {

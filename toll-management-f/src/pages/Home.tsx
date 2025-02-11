@@ -27,6 +27,11 @@ L.Marker.prototype.options.icon = DefaultIcon;
 const Home: React.FC = () => {
     const [tollStations, setTollStations] = useState<TollStation[]>([]);
 
+        // 🎯 Διαβάζουμε το OpID από το localStorage
+        const storedOpID = localStorage.getItem("OpID");
+        const isAdmin = storedOpID === "null"; // Admin αν το OpID είναι "null"
+    
+
     // 🎯 Φέρνουμε τα διόδια από το backend
     useEffect(() => {
         const fetchTollStations = async () => {
@@ -40,10 +45,14 @@ const Home: React.FC = () => {
         fetchTollStations();
     }, []);
 
+      // 🛠 Δυναμική αλλαγή του path για τις Διελεύσεις
+      const crossingsPath = isAdmin ? "/admin/crossings" : "/user/crossings";
+      const dashboardPath = isAdmin ? "/admin/dashboard" : "/user/dashboard";
+
     const menuItems = [
-        { title: "Διελεύσεις", description: "Σελίδα με τα δεδομένα διελεύσεων.", icon: <FaRoad />, path: "/crossings" },
+        { title: "Διελεύσεις", description: "Σελίδα με τα δεδομένα διελεύσεων.", icon: <FaRoad />, path: crossingsPath },
         { title: "Προβολή Οφειλών", description: "Σελίδα με τις οικονομικές συναλλαγές και τα χρέη/οφειλές.", icon: <FaMoneyBill />, path: "/debts" },
-        { title: "Ανάλυση Δεδομένων", description: "Ενότητα με γραφήματα και στατιστικά δεδομένα.", icon: <FaChartBar />, path: "/dashboard" },
+        { title: "Ανάλυση Δεδομένων", description: "Ενότητα με γραφήματα και στατιστικά δεδομένα.", icon: <FaChartBar />, path: dashboardPath },
         { title: "Ιστορικό", description: "Πρόσβαση σε παλαιότερες εγγραφές διελεύσεων και συναλλαγών.", icon: <FaHistory />, path: "/history" },
      ];
 
