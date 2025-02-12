@@ -48,10 +48,12 @@ const Home: React.FC = () => {
       // 🛠 Δυναμική αλλαγή του path για τις Διελεύσεις
       const crossingsPath = isAdmin ? "/admin/crossings" : "/user/crossings";
       const dashboardPath = isAdmin ? "/admin/dashboard" : "/user/dashboard";
+      const debtsPath = isAdmin ? "/admin/debts" : "/user/debts";
+      
 
     const menuItems = [
         { title: "Διελεύσεις", description: "Σελίδα με τα δεδομένα διελεύσεων.", icon: <FaRoad />, path: crossingsPath },
-        { title: "Προβολή Οφειλών", description: "Σελίδα με τις οικονομικές συναλλαγές και τα χρέη/οφειλές.", icon: <FaMoneyBill />, path: "/debts" },
+        { title: "Προβολή Οφειλών", description: "Σελίδα με τις οικονομικές συναλλαγές και τα χρέη/οφειλές.", icon: <FaMoneyBill />, path: debtsPath },
         { title: "Ανάλυση Δεδομένων", description: "Ενότητα με γραφήματα και στατιστικά δεδομένα.", icon: <FaChartBar />, path: dashboardPath },
         { title: "Ιστορικό", description: "Πρόσβαση σε παλαιότερες εγγραφές διελεύσεων και συναλλαγών.", icon: <FaHistory />, path: "/history" },
      ];

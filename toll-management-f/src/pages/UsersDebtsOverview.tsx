@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { Table, Button, Form, Modal } from "react-bootstrap";
-import api from "../api/api"; 
+import api from "../api/api";
 import { useNavigate } from "react-router-dom";
 
 interface Debt {
@@ -10,10 +10,10 @@ interface Debt {
   creditor_company: string;
   amount_owed: number;
   is_paid: boolean;
-  can_pay: boolean; 
+  can_pay: boolean;
 }
 
-const AdminDebtsOverview: React.FC = () => {
+const UsersDebtsOverview: React.FC = () => {
   const [debts, setDebts] = useState<Debt[]>([]);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string>("");
@@ -25,28 +25,38 @@ const AdminDebtsOverview: React.FC = () => {
   const [startDate, setStartDate] = useState<string>("");
   const [endDate, setEndDate] = useState<string>("");
 
-  // (Admin δεν κάνει ποτέ pay, άρα δεν χρειάζεται καν Modal;
-  //  αλλά αν θέλουμε να το αφήσουμε, το αφήνουμε. Το βλέπεις εσύ.)
-  const [showModal, setShowModal] = useState<boolean>(false);
+  // Modal πληρωμής
   const [selectedDebt, setSelectedDebt] = useState<Debt | null>(null);
+  const [showModal, setShowModal] = useState<boolean>(false);
 
+  const username = localStorage.getItem("authUsername") || "";
   const navigate = useNavigate();
 
+  // -------------------------------------------------
+  // Αρχική ανάκτηση οφειλών
+  // -------------------------------------------------
   useEffect(() => {
     fetchDebts();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  // -------------------------------------------------
+  // Συνάρτηση για ανάκτηση οφειλών (debts) με φίλτρα
+  // -------------------------------------------------
   const fetchDebts = async () => {
     try {
+      setLoading(true);
+      setError("");
+
       const token = localStorage.getItem("authToken");
       if (!token) {
         setError("No authentication token found.");
         setLoading(false);
         return;
       }
+
       const headers = { headers: { "X-OBSERVATORY-AUTH": token } };
-      let queryParams = new URLSearchParams();
+      const queryParams = new URLSearchParams();
 
       if (selectedCompany) queryParams.append("company", selectedCompany);
       if (selectedCreditor) queryParams.append("creditor", selectedCreditor);
@@ -55,20 +65,23 @@ const AdminDebtsOverview: React.FC = () => {
       if (endDate) queryParams.append("end_date", endDate);
 
       const response = await api.get(`/admin/debts?${queryParams.toString()}`, headers);
-      console.log("🔹 [Admin] Debts API Response:", response.data);
+      console.log("🔹 [User] Debts API Response:", response.data);
 
       setDebts(Array.isArray(response.data) ? response.data : []);
     } catch (err: any) {
-      console.error("Error fetching debts (Admin):", err.response ? err.response.data : err.message);
-      setError("Failed to fetch debts (Admin).");
+      console.error("Error fetching debts:", err.response ? err.response.data : err.message);
+      setError("Failed to fetch debts (User).");
     } finally {
       setLoading(false);
     }
   };
 
-  // Admin typically doesn't pay any debt, so handlePayDebt might be unused:
+  // -------------------------------------------------
+  // Πληρωμή Οφειλής
+  // -------------------------------------------------
   const handlePayDebt = async () => {
     if (!selectedDebt) return;
+
     try {
       const token = localStorage.getItem("authToken");
       if (!token) {
@@ -77,42 +90,75 @@ const AdminDebtsOverview: React.FC = () => {
       }
 
       const headers = { headers: { "X-OBSERVATORY-AUTH": token } };
-      // Αν θέλουμε, δίνουμε στον admin δικαίωμα πληρωμής (λίγο παράξενο),
-      // αλλιώς δεν υλοποιούμε καν αυτή τη λογική.
-      const response = await api.put(`/admin/debts/${selectedDebt.id}/pay`, {}, headers);
+      const response = await api.put(
+        `/admin/debts/${selectedDebt.id}/pay`,
+        {},
+        headers
+      );
 
       if (response.status === 200) {
-        const updatedDebt = response.data;
-        setDebts((prevDebts) =>
-          prevDebts.map((d) =>
-            d.id === updatedDebt.id
-              ? { ...d, is_paid: true, can_pay: false }
-              : d
-          )
-        );
-      }
+        // ✅ Κλείνουμε το modal
+        setShowModal(false);
 
-      setShowModal(false);
+        // ✅ Ξανακάνουμε fetch για να ενημερωθεί άμεσα ο πίνακας οφειλών
+        await fetchDebts();
+      }
     } catch (err: any) {
       console.error("Error updating debt:", err.response ? err.response.data : err.message);
-      setError("Failed to update debt.");
+      setError("Failed to update debt (User).");
     }
   };
 
-  // Συγκεντρώνουμε τις μοναδικές τιμές (Admin: καμία λογική περιορισμού)
+  // -------------------------------------------------
+  // Συγκεντρώνουμε τις μοναδικές τιμές από το debts
+  // -------------------------------------------------
   const allDebtors = Array.from(new Set(debts.map((d) => d.company_name)));
   const allCreditors = Array.from(new Set(debts.map((d) => d.creditor_company)));
 
-  // Admin μπορεί να επιλέξει τα πάντα
-  const filteredCompanies = [...allDebtors];
-  const filteredCreditors = [...allCreditors];
+  // Ξεκινάμε με όλα τα πιθανά
+  let filteredCompanies = [...allDebtors];
+  let filteredCreditors = [...allCreditors];
 
+  // -------------------------------------------------
+  // Περιορισμοί όταν ΔΕΝ είμαστε admin
+  // -------------------------------------------------
+  if (username !== "admin") {
+    // 1) Αν ο χρήστης επέλεξε συγκεκριμένη Πιστώτρια
+    if (selectedCreditor) {
+      if (selectedCreditor === username) {
+        // User διάλεξε τον εαυτό του σαν πιστώτρια
+        // => στο άλλο φίλτρο, εμφανίζονται όλες οι υπόλοιπες, εκτός από τον user
+        filteredCompanies = filteredCompanies.filter((c) => c !== username);
+      } else {
+        // User διάλεξε μία άλλη εταιρεία σαν πιστώτρια
+        // => μόνο ο user μπορεί να χρωστάει
+        filteredCompanies = [username];
+      }
+    }
+
+    // 2) Αν ο χρήστης επέλεξε συγκεκριμένη Εταιρεία που Χρωστάει
+    if (selectedCompany) {
+      if (selectedCompany === username) {
+        // Ο user έβαλε τον εαυτό του ως οφειλέτη
+        // => στο άλλο φίλτρο, εμφανίζονται όλες οι υπόλοιπες, εκτός του user
+        filteredCreditors = filteredCreditors.filter((cr) => cr !== username);
+      } else {
+        // Έβαλε κάποια άλλη σαν οφειλέτη
+        // => ο user είναι η μοναδική πιστώτρια
+        filteredCreditors = [username];
+      }
+    }
+  }
+
+  // -------------------------------------------------
+  // Render
+  // -------------------------------------------------
   return (
     <div className="container mt-5">
-      <h1 className="mb-4">Debts Overview (Admin)</h1>
+      <h1 className="mb-4">Debts Overview (User)</h1>
       {error && <p className="text-danger">{error}</p>}
 
-      {/* ΦΙΛΤΡΑ */}
+      {/* Φίλτρα */}
       <div className="mb-4">
         <Form.Group controlId="companySelect" className="mb-3">
           <Form.Label>Εταιρεία που Χρωστάει</Form.Label>
@@ -207,10 +253,20 @@ const AdminDebtsOverview: React.FC = () => {
                 <td>
                   {debt.is_paid ? (
                     <span className="text-success">Εξοφλήθηκε</span>
+                  ) : debt.can_pay ? (
+                    // Κουμπί πληρωμής ΜΟΝΟ αν can_pay === true
+                    <Button
+                      variant="warning"
+                      onClick={() => {
+                        setSelectedDebt(debt);
+                        setShowModal(true);
+                      }}
+                    >
+                      Πληρωμή
+                    </Button>
                   ) : (
                     <span className="text-danger">Εκκρεμεί</span>
                   )}
-                  {/* Προαιρετικά, ο Admin δε χρειάζεται Pay Button */}
                 </td>
               </tr>
             ))}
@@ -218,10 +274,10 @@ const AdminDebtsOverview: React.FC = () => {
         </Table>
       )}
 
-      {/* Προαιρετικά, ένα modal αν θες να αφήσεις admin να πληρώνει */}
+      {/* Modal Επιβεβαίωσης Πληρωμής */}
       <Modal show={showModal} onHide={() => setShowModal(false)}>
         <Modal.Header closeButton>
-          <Modal.Title>Επιβεβαίωση Πληρωμής (Admin?)</Modal.Title>
+          <Modal.Title>Επιβεβαίωση Πληρωμής</Modal.Title>
         </Modal.Header>
         <Modal.Body>
           Είστε σίγουροι ότι θέλετε να εξοφλήσετε αυτή την οφειλή;
@@ -239,4 +295,4 @@ const AdminDebtsOverview: React.FC = () => {
   );
 };
 
-export default AdminDebtsOverview;
+export default UsersDebtsOverview;

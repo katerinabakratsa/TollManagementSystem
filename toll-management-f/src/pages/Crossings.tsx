@@ -1,40 +1,56 @@
-// src/pages/Crossings.tsx
-
 import React, { useEffect, useState } from "react";
 import { Container, Table, Form, Button } from "react-bootstrap";
 import api from "../api/api";
 
+// ----------------------------------------------------------
+// Δηλώνουμε το interface που περιμένουμε από το backend
+// ----------------------------------------------------------
 interface Crossing {
   stationID: string;
   timestamp: string;
-  locality: string;
-  provider: string;
+  locality: string;   // Αν και το passAnalysis δεν επιστρέφει locality, βάζουμε "N/A"
+  tagProvider: string; // tagHomeID (πάροχος tag)
   passCharge: number;
 }
+
 interface TollStation {
   TollID: string;
   Locality: string;
   OpID: string;
 }
 
-
 const Crossings: React.FC = () => {
+  // ----------------------------------------------------------
+  // States
+  // ----------------------------------------------------------
   const [crossings, setCrossings] = useState<Crossing[]>([]);
   const [operators, setOperators] = useState<string[]>([]);
-  const [selectedOperator, setSelectedOperator] = useState<string>("");
+
+  // Το combo-box για το "Station OpID"
+  const [selectedStationOp, setSelectedStationOp] = useState<string>("");
+  // Το combo-box για το "Tag OpID"
+  const [selectedTagOp, setSelectedTagOp] = useState<string>("");
+
   const [startDate, setStartDate] = useState<string>("20220101");
   const [endDate, setEndDate] = useState<string>("20221231");
+
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Αν θέλουμε να δείξουμε locality στο table
   const [tollStations, setTollStations] = useState<{
     [key: string]: { locality: string; operator: string };
   }>({});
 
-  // Φέρνουμε το OpID από το localStorage
+  // ----------------------------------------------------------
+  // userOpID: "null" => admin, αλλιώς user
+  // ----------------------------------------------------------
   const storedOpID = localStorage.getItem("OpID");
-  // Μετατρέπουμε το "null" string σε πραγματικό null για τον admin
-  const userOpID = storedOpID === "null" ? null : storedOpID; // Admin -> null, Users -> 'OpID'
+  const userOpID = storedOpID === "null" ? null : storedOpID;
 
+  // ----------------------------------------------------------
+  // 1) useEffect -> Φέρνουμε tollStations για να βγάλουμε τους operators
+  // ----------------------------------------------------------
   useEffect(() => {
     const fetchTollStations = async () => {
       try {
@@ -43,14 +59,14 @@ const Crossings: React.FC = () => {
           console.error("No authentication token found.");
           return;
         }
-        
-        // Λέμε ρητά ότι το response.data είναι πίνακας από TollStation
+
+        // Παίρνουμε όλους τους σταθμούς
         const response = await api.get<TollStation[]>("/admin/tollstations", {
           headers: { "X-OBSERVATORY-AUTH": token },
         });
-  
-        const stationsData = response.data;  // τώρα το βλέπει ως TollStation[]
-  
+        const stationsData = response.data;
+
+        // Δημιουργία map για locality κ.λπ.
         const stationsMap = stationsData.reduce((acc: any, station) => {
           acc[station.TollID] = {
             locality: station.Locality || "N/A",
@@ -58,45 +74,24 @@ const Crossings: React.FC = () => {
           };
           return acc;
         }, {});
-  
-        console.log("Toll Stations Map:", stationsMap);
         setTollStations(stationsMap);
-      } catch (error) {
-        console.error("Error fetching toll stations:", error);
-      }
-    };
-  
-    const fetchOperators = async () => {
-      try {
-        const token = localStorage.getItem("authToken");
-        if (!token) {
-          console.error("No authentication token found.");
-          return;
-        }
-  
-        // Χρησιμοποιούμε γενικό στο get
-        const response = await api.get<TollStation[]>("/admin/tollstations", {
-          headers: { "X-OBSERVATORY-AUTH": token },
-        });
-  
-        // Εδώ πλέον μπορούμε να χαρτογραφήσουμε ασφαλώς
-        const stationsData = response.data; 
-        const uniqueOperators = Array.from(
-          new Set(stationsData.map((op) => op.OpID))
-        );
-  
-        setOperators(uniqueOperators);        
-        setSelectedOperator(uniqueOperators[0] || "");
-      } catch (error) {
-        console.error("Error fetching operators:", error);
-      }
-    };
-  
-    fetchTollStations();
-    fetchOperators();
-  }, []);
-  
 
+        // Βρίσκουμε όλους τους μοναδικούς operators (OpIDs)
+        const uniqueOps = Array.from(new Set(stationsData.map((st) => st.OpID)));
+        // Βάζουμε "" στην αρχή για την επιλογή «Όλες»
+        setOperators(["", ...uniqueOps]);
+
+      } catch (err) {
+        console.error("Error fetching toll stations:", err);
+      }
+    };
+
+    fetchTollStations();
+  }, []);
+
+  // ----------------------------------------------------------
+  // 2) Συνάρτηση fetchCrossings
+  // ----------------------------------------------------------
   const fetchCrossings = async () => {
     try {
       setLoading(true);
@@ -108,50 +103,56 @@ const Crossings: React.FC = () => {
         return;
       }
 
-      console.log(
-        "Fetching crossings for:",
-        selectedOperator,
-        startDate,
-        endDate
-      );
-
-      // Έλεγχος στα dates (να έχουν format YYYYMMDD, αλλιώς default)
-      const formatDate = (date: string) => {
-        if (!date || date.length !== 8) {
-          return "20220101";
-        }
-        return date;
-      };
-
+      // Μορφοποίηση των ημερομηνιών
+      const formatDate = (d: string) => (d && d.length === 8 ? d : "20220101");
       const formattedStart = formatDate(startDate);
       const formattedEnd = formatDate(endDate);
 
-      console.log("📌 Formatted Start Date:", formattedStart);
-      console.log("📌 Formatted End Date:", formattedEnd);
+      // Αν user => πάντα ο σταθμός & tag = userOpID
+      if (userOpID !== null) {
+        // Απλός χρήστης (όχι admin)
+        const singleStationOp = userOpID;
+        const singleTagOp = userOpID;
 
-      // Αν είναι απλός χρήστης, χρησιμοποιεί το δικό του OpID
-      // Διαφορετικά (admin), παίρνει ό,τι διάλεξε από το dropdown
-      const operatorToUse = userOpID !== null ? userOpID : selectedOperator;
-
-      // Request στο backend
-      const response = await api.get(
-        `/passAnalysis/stationOpID/${operatorToUse}/tagOpID/${operatorToUse}/date_from/${formattedStart}/date_to/${formattedEnd}`,
-        {
-          headers: { "X-OBSERVATORY-AUTH": token },
-        }
-      );
-
-      console.log("📌 API Response:", response.data);
-
-      // Έλεγχος αν το response.data είναι array και αν έχει δεδομένα
-      if (Array.isArray(response.data) && response.data.length > 0) {
-        console.log("✅ Found Passes:", response.data[0].passList);
-        setCrossings(response.data[0].passList || []);
+        // Κάνουμε μόνο ΜΙΑ κλήση
+        const arr = await callPassAnalysis(
+          singleStationOp,
+          singleTagOp,
+          formattedStart,
+          formattedEnd,
+          token
+        );
+        setCrossings(arr);
       } else {
-        console.log("❌ No Passes Found.");
-        setCrossings([]);
+        // Admin => πολλαπλές κλήσεις αν είναι "Όλες"
+        let stationOps: string[] = [];
+        let tagOps: string[] = [];
+
+        // Αν διάλεξε "Όλες" => stationOps = όλοι οι operators
+        // αλλιώς => stationOps = [selectedStationOp]
+        stationOps = selectedStationOp === "" ? operators.slice(1) : [selectedStationOp];
+        tagOps = selectedTagOp === "" ? operators.slice(1) : [selectedTagOp];
+
+        console.log("Πραγματικοί stationOps:", stationOps);
+        console.log("Πραγματικοί tagOps:", tagOps);
+
+        let allCrossings: Crossing[] = [];
+        for (const sOp of stationOps) {
+          for (const tOp of tagOps) {
+            // πολλαπλή κλήση
+            const arr = await callPassAnalysis(
+              sOp,
+              tOp,
+              formattedStart,
+              formattedEnd,
+              token
+            );
+            allCrossings = [...allCrossings, ...arr];
+          }
+        }
+        setCrossings(allCrossings);
       }
-    } catch (err: any) {
+    } catch (err) {
       setError("Failed to fetch data.");
       console.error("API error:", err);
     } finally {
@@ -159,68 +160,134 @@ const Crossings: React.FC = () => {
     }
   };
 
+  // ----------------------------------------------------------
+  // Βοηθητική συνάρτηση για κλήση στο endpoint passAnalysis
+  // ----------------------------------------------------------
+  const callPassAnalysis = async (
+    stationOpID: string,
+    tagOpID: string,
+    fromD: string,
+    toD: string,
+    token: string
+  ): Promise<Crossing[]> => {
+    // Κλήση στο backend
+    const resp = await api.get(`/passAnalysis/stationOpID/${stationOpID}/tagOpID/${tagOpID}/date_from/${fromD}/date_to/${toD}`, 
+    { headers: { "X-OBSERVATORY-AUTH": token } });
+
+    let results: Crossing[] = [];
+    if (Array.isArray(resp.data) && resp.data.length > 0) {
+      const passList = resp.data[0].passList || [];
+      results = passList.map((p: any) => ({
+        stationID: p.stationID || "N/A",
+        timestamp: p.timestamp || "N/A",
+        tagProvider: p.tagProvider || "N/A",
+        passCharge: p.passCharge ?? 0,
+        locality: tollStations[p.stationID]?.locality || "N/A"
+      }));
+    }
+    return results;
+  };
+
+  // ----------------------------------------------------------
+  // Rendering
+  // ----------------------------------------------------------
   return (
     <Container className="mt-5">
       <h1 className="text-center">Toll Crossings</h1>
 
-      {/* Μόνο για admin δείχνουμε το dropdown */}
+      {/* Μόνο admin βλέπει dropdowns */}
       {userOpID === null && (
-        <Form.Group controlId="operatorSelect" className="mb-3">
-          <Form.Label>Επιλογή Εταιρείας Διοδίων</Form.Label>
-          <Form.Select
-            value={selectedOperator}
-            onChange={(e) => setSelectedOperator(e.target.value)}
-          >
-            {operators.map((op) => (
-              <option key={op} value={op}>
-                {op}
-              </option>
-            ))}
-          </Form.Select>
-        </Form.Group>
+        <>
+          <Form.Group controlId="stationOperatorSelect" className="mb-3">
+            <Form.Label>Επιλογή Εταιρείας Διοδίων (StationOp)</Form.Label>
+            <Form.Select
+              value={selectedStationOp}
+              onChange={(e) => setSelectedStationOp(e.target.value)}
+            >
+              <option value="">Όλες</option>
+              {operators
+                .filter((op) => op !== "")
+                .map((op) => (
+                  <option key={op} value={op}>
+                    {op}
+                  </option>
+                ))}
+            </Form.Select>
+          </Form.Group>
+
+          <Form.Group controlId="tagProviderSelect" className="mb-3">
+            <Form.Label>Επιλογή Παρόχου Tag (TagOp)</Form.Label>
+            <Form.Select
+              value={selectedTagOp}
+              onChange={(e) => setSelectedTagOp(e.target.value)}
+            >
+              <option value="">Όλες</option>
+              {operators
+                .filter((op) => op !== "")
+                .map((op) => (
+                  <option key={op} value={op}>
+                    {op}
+                  </option>
+                ))}
+            </Form.Select>
+          </Form.Group>
+        </>
       )}
 
-      {/* Αν είναι user, δείχνουμε το δικό του OpID */}
-      {userOpID !== null && (
-        <p>
-          Εμφάνιση διελεύσεων για την εταιρεία: <strong>{userOpID}</strong>
-        </p>
-      )}
+      <Form.Group controlId="startDate" className="mb-3">
+        <Form.Label>Ημερομηνία Έναρξης (YYYYMMDD)</Form.Label>
+        <Form.Control
+          type="text"
+          value={startDate}
+          onChange={(e) => setStartDate(e.target.value)}
+        />
+      </Form.Group>
+      <Form.Group controlId="endDate" className="mb-3">
+        <Form.Label>Ημερομηνία Λήξης (YYYYMMDD)</Form.Label>
+        <Form.Control
+          type="text"
+          value={endDate}
+          onChange={(e) => setEndDate(e.target.value)}
+        />
+      </Form.Group>
 
-      {/* Ένα κουμπί για να "φορτώσει" τις διελεύσεις με βάση τα φίλτρα */}
       <Button onClick={fetchCrossings} variant="primary" className="mb-3">
         Εφαρμογή Φίλτρων
       </Button>
 
-      {/* Προαιρετική εμφάνιση λάθους αν υπάρχει */}
       {error && <p className="text-danger">{error}</p>}
 
-      {/* Πίνακας Διελεύσεων */}
       <Table striped bordered hover>
         <thead>
           <tr>
-            <th>Όνομα Σταθμού</th>
+            <th>Σταθμός</th>
             <th>Ημερομηνία</th>
             <th>Τοποθεσία</th>
-            <th>Πάροχος</th>
+            <th>Πάροχος Tag</th>
             <th>Κόστος</th>
           </tr>
         </thead>
         <tbody>
-          {crossings.map((crossing, index) => (
-            <tr key={index}>
-              {/* stationID, timestamp κ.λπ. μπορεί να είναι κενά, άρα βάζουμε "N/A" */}
-              <td>{crossing.stationID || "N/A"}</td>
-              <td>{crossing.timestamp || "N/A"}</td>
-              <td>{tollStations[crossing.stationID]?.locality || "N/A"}</td>
-              <td>{tollStations[crossing.stationID]?.operator || "N/A"}</td>
-              <td>{(crossing.passCharge ?? 0).toFixed(2)} €</td>
+          {crossings.length > 0 ? (
+            crossings.map((item, idx) => (
+              <tr key={idx}>
+                <td>{item.stationID}</td>
+                <td>{item.timestamp}</td>
+                <td>{item.locality}</td>
+                <td>{item.tagProvider}</td>
+                <td>{item.passCharge.toFixed(2)} €</td>
+              </tr>
+            ))
+          ) : (
+            <tr>
+              <td colSpan={5} className="text-center">
+                Δεν υπάρχουν διελεύσεις για τα επιλεγμένα φίλτρα.
+              </td>
             </tr>
-          ))}
+          )}
         </tbody>
       </Table>
 
-      {/* Προαιρετικά μπορείτε να βάλετε ένα loading indicator, π.χ. */}
       {loading && <p>Φόρτωση...</p>}
     </Container>
   );
