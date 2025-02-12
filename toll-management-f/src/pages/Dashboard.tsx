@@ -95,7 +95,7 @@ const Dashboard: React.FC = () => {
       const formattedEnd = endDate ? endDate.toISOString().split("T")[0].replace(/-/g, "") : "20221231";
 
       const passesResponse = await api.get(
-        `/passAnalysis/stationOpID/${selectedOperator}/tagOpID/${selectedOperator}/date_from/${formattedStart}/date_to/${formattedEnd}`,
+        `/passAnalysis2/stationOpID/${selectedOperator}/tagOpID/${selectedOperator}/date_from/${formattedStart}/date_to/${formattedEnd}`,
         headers
       );
 

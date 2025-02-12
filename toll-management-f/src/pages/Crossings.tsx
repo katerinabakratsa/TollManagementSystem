@@ -171,7 +171,7 @@ const Crossings: React.FC = () => {
     token: string
   ): Promise<Crossing[]> => {
     // Κλήση στο backend
-    const resp = await api.get(`/passAnalysis/stationOpID/${stationOpID}/tagOpID/${tagOpID}/date_from/${fromD}/date_to/${toD}`, 
+    const resp = await api.get(`/passAnalysis2/stationOpID/${stationOpID}/tagOpID/${tagOpID}/date_from/${fromD}/date_to/${toD}`, 
     { headers: { "X-OBSERVATORY-AUTH": token } });
 
     let results: Crossing[] = [];
@@ -182,7 +182,7 @@ const Crossings: React.FC = () => {
         timestamp: p.timestamp || "N/A",
         tagProvider: p.tagProvider || "N/A",
         passCharge: p.passCharge ?? 0,
-        locality: tollStations[p.stationID]?.locality || "N/A"
+        locality: tollStations[p.stationID]?.locality ?? "N/A",
       }));
     }
     return results;

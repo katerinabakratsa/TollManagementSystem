@@ -127,7 +127,7 @@ const UsersDashboard: React.FC = () => {
       console.log("Fetching data for user operator:", userOpID);
       // Παίρνουμε τα passes για τον συγκεκριμένο userOpID
       const passesResponse = await api.get<any>(
-        `/passAnalysis/stationOpID/${userOpID}/tagOpID/${userOpID}/date_from/${formattedStart}/date_to/${formattedEnd}`,
+        `/passAnalysis2/stationOpID/${userOpID}/tagOpID/${userOpID}/date_from/${formattedStart}/date_to/${formattedEnd}`,
         headers
       );
 

@@ -494,7 +494,6 @@ def pass_analysis(stationOpID, tagOpID, from_date, to_date):
                 p.timestamp,
                 p.tagRef AS tagID,
                 p.tollID AS stationID,
-                p.tagHomeID AS tagProvider,
                 p.charge AS passCharge
             FROM tollPasses p
             INNER JOIN tollStations s ON p.tollID = s.TollID
@@ -520,8 +519,7 @@ def pass_analysis(stationOpID, tagOpID, from_date, to_date):
                 "passID":      pass_id,
                 "stationID":   p['stationID'],
                 "timestamp":   p['timestamp'].strftime('%Y-%m-%d %H:%M:%S'),
-                "tagID":       p['tagID'],
-                "tagProvider": p['tagProvider'],  # ✅ Προσθήκη του provider
+                "tagID":       p['tagID'], 
                 "passCharge":  float(p['passCharge'])
             })
 
@@ -703,6 +701,129 @@ def charges_by(tollOpID, from_date, to_date):
             cursor.close()
         if conn is not None:
             conn.close()  
+            
+            
+@app.route('/api/passAnalysis2/stationOpID/<stationOpID>/tagOpID/<tagOpID>/date_from/<from_date>/date_to/<to_date>', methods=['GET'])
+def pass_analysis2(stationOpID, tagOpID, from_date, to_date):
+
+    conn = None
+    cursor = None
+    
+    try:
+        
+        token = request.headers.get("X-OBSERVATORY-AUTH")
+        if not token or token not in tokens:
+            return jsonify({"status": "failed", "info": "Invalid or missing token"}), 401
+
+        username = tokens[token]  # ✅ username == OpID για μη-admin χρήστες
+
+        if username != "admin" and username != stationOpID:
+            return jsonify({"status": "failed", "info": "Permission denied"}), 403  # 🚨 Προστασία δεδομένων
+
+        # 1. Έλεγχος μορφής ημερομηνιών (YYYYMMDD)
+        if not (len(from_date) == 8 and len(to_date) == 8 and from_date.isdigit() and to_date.isdigit()):
+            return jsonify({
+                "status": "failed",
+                "info": "Invalid date format. Use YYYYMMDD"
+            }), 400
+
+        # 2. Μετατροπή ημερομηνιών σε datetime objects
+        from datetime import datetime
+        try:
+            from_date_obj = datetime.strptime(from_date, '%Y%m%d')
+            to_date_obj = datetime.strptime(to_date, '%Y%m%d')
+        except ValueError:
+            return jsonify({
+                "status": "failed",
+                "info": "Invalid date values. Use YYYYMMDD"
+            }), 400
+
+        # 3. Φιλική μορφή ημερομηνιών για χρήση στα SQL queries
+        from_date_formatted = from_date_obj.strftime('%Y-%m-%d')
+        to_date_formatted = to_date_obj.strftime('%Y-%m-%d')
+
+        # 4. Σύνδεση με τη βάση
+        conn = get_db_connection()
+        cursor = conn.cursor(dictionary=True)
+
+        # 5. Έλεγχος αν υπάρχει ο operator του σταθμού (stationOpID) στον πίνακα tollStations με LIMIT 1
+        cursor.execute("SELECT 1 FROM tollStations WHERE OpID = %s LIMIT 1", (stationOpID,))
+        station_op_found = cursor.fetchone()
+        if not station_op_found:
+            return jsonify({
+                "status": "failed",
+                "info": f"Station operator with OpID={stationOpID} not found"
+            }), 404
+
+        print(f"Received Dates: from_date={from_date}, to_date={to_date}")
+
+        # 6. Ερώτημα για τις διελεύσεις
+        query = """
+            SELECT 
+                p.timestamp,
+                p.tagRef AS tagID,
+                p.tollID AS stationID,
+                p.tagHomeID AS tagProvider,
+                p.charge AS passCharge
+            FROM tollPasses p
+            INNER JOIN tollStations s ON p.tollID = s.TollID
+            WHERE s.OpID = %s         -- operator του σταθμού
+              AND p.tagHomeID = %s    -- operator του tag
+              AND DATE(p.timestamp) BETWEEN %s AND %s
+            ORDER BY p.timestamp ASC
+        """
+        print(f"Executing query with: stationOpID={stationOpID}, tagOpID={tagOpID}, from_date={from_date_formatted}, to_date={to_date_formatted}")
+
+        cursor.execute(query, (stationOpID, tagOpID, from_date_formatted, to_date_formatted))
+        passes = cursor.fetchall()
+
+        # 7. Δημιουργία passList με passIndex, passID κλπ.
+        pass_list = []
+        for index, p in enumerate(passes, start=1):
+            # passID: συνδυασμός timestamp + stationID
+            timestamp_str = p['timestamp'].strftime('%Y%m%d%H%M%S')
+            pass_id = f"{timestamp_str}_{p['stationID']}"
+
+            pass_list.append({
+                "passIndex":   index,
+                "passID":      pass_id,
+                "stationID":   p['stationID'],
+                "timestamp":   p['timestamp'].strftime('%Y-%m-%d %H:%M:%S'),
+                "tagID":       p['tagID'],
+                "tagProvider": p['tagProvider'], 
+                "passCharge":  float(p['passCharge'])
+            })
+
+        # 8. Δημιουργία τελικού JSON αντικειμένου
+        response = {
+            "stationOpID":      stationOpID,
+            "tagOpID":          tagOpID,
+            "requestTimestamp": datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+            "periodFrom":       from_date_formatted,
+            "periodTo":         to_date_formatted,
+            "nPasses":          len(pass_list),
+            "passList":         pass_list
+        }
+        
+        
+        # Προαιρετικά: format (JSON / CSV)
+        format_type = request.args.get("format", "json")
+        return format_response([response], format_type)
+
+    except Exception as e:
+        return jsonify({
+            "status": "failed",
+            "info": str(e)
+        }), 500
+
+    finally:
+        if cursor is not None:
+            cursor.close()
+        if conn is not None:
+            conn.close()
+
+
+
 
 
 @app.route('/api/passes', methods=['GET'])

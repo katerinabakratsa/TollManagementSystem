@@ -148,7 +148,7 @@ const UserCrossings: React.FC = () => {
     toDate: string,
     token: string
   ): Promise<Crossing[]> => {
-    const url = `/passAnalysis/stationOpID/${stOp}/tagOpID/${tagOp}/date_from/${fromDate}/date_to/${toDate}`;
+    const url = `/passAnalysis2/stationOpID/${stOp}/tagOpID/${tagOp}/date_from/${fromDate}/date_to/${toDate}`;
     const resp = await api.get(url, { headers: { "X-OBSERVATORY-AUTH": token } });
 
     if (!Array.isArray(resp.data) || resp.data.length === 0) {
