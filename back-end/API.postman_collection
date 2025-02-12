@@ -7,27 +7,6 @@
 	},
 	"item": [
 		{
-			"name": "Healthcheck",
-			"request": {
-				"method": "GET",
-				"header": [],
-				"url": {
-					"raw": "https://localhost:9115/api/admin/healthcheck",
-					"protocol": "https",
-					"host": [
-						"localhost"
-					],
-					"port": "9115",
-					"path": [
-						"api",
-						"admin",
-						"healthcheck"
-					]
-				}
-			},
-			"response": []
-		},
-		{
 			"name": "reset_stations",
 			"request": {
 				"method": "POST",
@@ -57,8 +36,8 @@
 				"method": "POST",
 				"header": [
 					{
-						"key": "Authorization",
-						"value": "Bearer some_token",
+						"key": "X-OBSERVATORY-AUTH",
+						"value": "04348026-a5fc-421d-8c88-1db5ba81d144",
 						"type": "text"
 					}
 				],
@@ -160,7 +139,7 @@
 				"header": [
 					{
 						"key": "X-OBSERVATORY-AUTH",
-						"value": "31f5c133-2f32-43be-ada9-343c77732548",
+						"value": "04348026-a5fc-421d-8c88-1db5ba81d144",
 						"type": "text"
 					}
 				],
@@ -212,9 +191,15 @@
 			"name": "passAnalysis",
 			"request": {
 				"method": "GET",
-				"header": [],
+				"header": [
+					{
+						"key": "X-OBSERVATORY-AUTH",
+						"value": "625bda15-f9a0-4ade-86cf-b1f21da1c4ae",
+						"type": "text"
+					}
+				],
 				"url": {
-					"raw": "https://127.0.0.1:9115/api/passAnalysis/stationOpID/AM/tagOpID/AM/date_from/20220101/date_to/20230101",
+					"raw": "https://127.0.0.1:9115/api/passAnalysis/stationOpID/NO/tagOpID/NO/date_from/20220101/date_to/20230101",
 					"protocol": "https",
 					"host": [
 						"127",
@@ -227,9 +212,9 @@
 						"api",
 						"passAnalysis",
 						"stationOpID",
-						"AM",
+						"NO",
 						"tagOpID",
-						"AM",
+						"NO",
 						"date_from",
 						"20220101",
 						"date_to",
@@ -243,7 +228,13 @@
 			"name": "users",
 			"request": {
 				"method": "GET",
-				"header": [],
+				"header": [
+					{
+						"key": "X-OBSERVATORY-AUTH",
+						"value": "",
+						"type": "text"
+					}
+				],
 				"url": {
 					"raw": "https://127.0.0.1:9115/api/admin/users",
 					"protocol": "https",
@@ -330,6 +321,33 @@
 						"20240101",
 						"date_to",
 						"20240131"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "healthcheck",
+			"request": {
+				"auth": {
+					"type": "noauth"
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "https://127.0.0.1:9115/api/admin/healthcheck",
+					"protocol": "https",
+					"host": [
+						"127",
+						"0",
+						"0",
+						"1"
+					],
+					"port": "9115",
+					"path": [
+						"api",
+						"admin",
+						"healthcheck"
 					]
 				}
 			},

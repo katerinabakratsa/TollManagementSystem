@@ -112,12 +112,23 @@ def list_users():
 
 # Λειτουργία: Δημιουργία ή αλλαγή χρήστη
 def user_mod(username, passw):
+    global TOKEN  # ✅ Χρησιμοποιούμε την ίδια μεταβλητή TOKEN όπως στο login/logout
+
+    if not TOKEN:
+        print("Error: You are not logged in. Please log in first.")
+        return
+
+    headers = {"X-OBSERVATORY-AUTH": TOKEN}  # ✅ Χρησιμοποιούμε το αποθηκευμένο token
     data = {"username": username, "password": passw}
-    response = call_api("admin/usermod", "POST", data=data)
-    if response:
-        print("User modified successfully.")
+
+    response = call_api("admin/usermod", "POST", data=data, headers=headers)
+
+    if response and response.get("status") == "success":
+        print(f"User {username} modified successfully.")
     else:
-        print("Failed to modify user.")
+        print(f"Failed to modify user. Error: {response}")
+
+
 
 # Λειτουργία: Reset stations
 def reset_stations():

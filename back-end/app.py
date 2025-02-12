@@ -308,7 +308,7 @@ def add_passes():
         cursor = conn.cursor()
 
 
-        with open('passes-sample.csv', mode='r', encoding='utf-8') as csvfile:
+        with open('passes24.csv', mode='r', encoding='utf-8') as csvfile:
             csv_reader = csv.reader(csvfile)
             next(csv_reader)  # Παράκαμψη headers
             for row in csv_reader:
@@ -701,6 +701,23 @@ def charges_by(tollOpID, from_date, to_date):
         if conn is not None:
             conn.close()  
             
+
+def user_mod(username, passw):
+    try:
+        token = request.headers.get('X-OBSERVATORY-AUTH')
+
+
+        if not token or token not in tokens:
+            return jsonify({"status": "failed", "info": "Invalid or missing token"}), 401
+
+
+        del tokens[token]
+
+
+        return '', 200
+    except Exception as e:
+        return jsonify({"status": "failed", "info": str(e)}), 500
+
             
 @app.route('/api/passAnalysis2/stationOpID/<stationOpID>/tagOpID/<tagOpID>/date_from/<from_date>/date_to/<to_date>', methods=['GET'])
 def pass_analysis2(stationOpID, tagOpID, from_date, to_date):
