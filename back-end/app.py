@@ -56,12 +56,8 @@ def get_db_connection():
     return mysql.connector.connect(
         host="localhost",  # Δημόσια IP της βάσης
         user="root",       # Username της MySQL
-<<<<<<< Updated upstream
-        password="alexandra",
-=======
         password="Ddffgg456",   # Password της MySQL
         port=3006,
->>>>>>> Stashed changes
         database="toll_management",  # Όνομα της βάσης
         charset="utf8mb4"
     )
@@ -145,9 +141,11 @@ def login():
 
         token = str(uuid.uuid4())
         tokens[token] = username
+        
+        OpID = None if username == "admin" else username
 
 
-        return jsonify({"status": "OK", "token": token}), 200
+        return jsonify({"status": "OK", "token": token, "OpID": OpID}), 200
     except Exception as e:
         app.logger.exception("Login error:")
         return jsonify({"status": "failed", "info": str(e)}), 500
@@ -438,16 +436,21 @@ def get_station_passes(stationID, from_date, to_date):
 
 @app.route('/api/passAnalysis/stationOpID/<stationOpID>/tagOpID/<tagOpID>/date_from/<from_date>/date_to/<to_date>', methods=['GET'])
 def pass_analysis(stationOpID, tagOpID, from_date, to_date):
-    """
-    Ανάλυση διελεύσεων μεταξύ operators:
-    Επιστρέφει λίστα με αναλυτικά στοιχεία για διελεύσεις (passList), όταν ένα tag που ανήκει σε έναν
-    συγκεκριμένο operator (tagOpID) περνάει από σταθμούς που ανήκουν σε άλλον operator (stationOpID).
-    """
 
     conn = None
     cursor = None
     
     try:
+        
+        token = request.headers.get("X-OBSERVATORY-AUTH")
+        if not token or token not in tokens:
+            return jsonify({"status": "failed", "info": "Invalid or missing token"}), 401
+
+        username = tokens[token]  # ✅ username == OpID για μη-admin χρήστες
+
+        if username != "admin" and username != stationOpID:
+            return jsonify({"status": "failed", "info": "Permission denied"}), 403  # 🚨 Προστασία δεδομένων
+
         # 1. Έλεγχος μορφής ημερομηνιών (YYYYMMDD)
         if not (len(from_date) == 8 and len(to_date) == 8 and from_date.isdigit() and to_date.isdigit()):
             return jsonify({
@@ -491,6 +494,7 @@ def pass_analysis(stationOpID, tagOpID, from_date, to_date):
                 p.timestamp,
                 p.tagRef AS tagID,
                 p.tollID AS stationID,
+                p.tagHomeID AS tagProvider,
                 p.charge AS passCharge
             FROM tollPasses p
             INNER JOIN tollStations s ON p.tollID = s.TollID
@@ -517,6 +521,7 @@ def pass_analysis(stationOpID, tagOpID, from_date, to_date):
                 "stationID":   p['stationID'],
                 "timestamp":   p['timestamp'].strftime('%Y-%m-%d %H:%M:%S'),
                 "tagID":       p['tagID'],
+                "tagProvider": p['tagProvider'],  # ✅ Προσθήκη του provider
                 "passCharge":  float(p['passCharge'])
             })
 
