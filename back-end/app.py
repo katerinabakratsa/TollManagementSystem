@@ -56,8 +56,7 @@ def get_db_connection():
     return mysql.connector.connect(
         host="localhost",  # Δημόσια IP της βάσης
         user="root",       # Username της MySQL
-        password="Ddffgg456",   # Password της MySQL
-        port=3006,
+        password="alexandra",   # Password της MySQL
         database="toll_management",  # Όνομα της βάσης
         charset="utf8mb4"
     )
