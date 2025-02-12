@@ -86,8 +86,8 @@ python cli.py tollstationpasses --station NAO01 --from 20240101 --to 20240131
 ---
 ## TEAM MEMBERS
 - Antonis Adamidis
-- Fany Kalogianni
 - Katerina Bakratsa
+- Fany Kalogianni
 - Alexandra Moraitaki
 - Thanasis Tsiatouras
 
