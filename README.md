@@ -21,13 +21,13 @@ The **Toll Management System** is a software application designed for managing t
 
 ##  Installation Guide
 
-###  ** Clone the Repository**
+###   Clone the Repository
 ```bash
 git clone https://github.com/ntua/softeng24-24.git
 cd softeng24-24
 ```
 
-###  ** Setup Backend**
+###   Setup Backend
 #### Install dependencies
 ```bash
 cd back-end
@@ -84,4 +84,11 @@ python cli.py tollstationpasses --station NAO01 --from 20240101 --to 20240131
    - Use `ssl_context=('cert.pem', 'key.pem')` in Flask.
 
 ---
+## TEAM MEMBERS
+Antonis Adamidis
+Fany Kalogianni
+Katerina Bakratsa
+Alexandra Moraitaki
+Thanasis Tsiatouras
 
+---
