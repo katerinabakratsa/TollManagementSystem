@@ -182,17 +182,34 @@ const UsersDashboard: React.FC = () => {
   // ----------------------------------------------------------
   const chartOptions: Highcharts.Options = {
     chart: { type: chartType },
-    title: { text: "" },
+    title: { text: "Διελεύσεις ανά Σταθμό" },
+    tooltip: {
+      pointFormat: "{series.name}: <b>{point.y}</b>",
+    },
+    plotOptions: {
+      pie: {
+        allowPointSelect: true,
+        cursor: "pointer",
+        dataLabels: {
+          enabled: true,
+          format: "<b>{point.name}</b>: {point.y}", // ✅ Εμφάνιση του ονόματος του σταθμού αντί για "slice"
+        },
+      },
+    },
     xAxis: { categories: filteredChartData.map((data) => data.name) },
     yAxis: { title: { text: "Διελεύσεις" } },
     series: [
       {
         name: "Διελεύσεις",
-        data: filteredChartData.map((d) => d.y),
+        data: filteredChartData.map((d) => ({
+          name: d.name, // ✅ Χρησιμοποιούμε το όνομα του σταθμού
+          y: d.y,
+        })),
         type: chartType,
       },
     ],
   };
+  
 
   // ----------------------------------------------------------
   // Render
