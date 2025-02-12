@@ -199,12 +199,12 @@ const Crossings: React.FC = () => {
       {userOpID === null && (
         <>
           <Form.Group controlId="stationOperatorSelect" className="mb-3">
-            <Form.Label>Επιλογή Εταιρείας Διοδίων (StationOp)</Form.Label>
+            <Form.Label>Station Operator</Form.Label>
             <Form.Select
               value={selectedStationOp}
               onChange={(e) => setSelectedStationOp(e.target.value)}
             >
-              <option value="">Όλες</option>
+              <option value="">All</option>
               {operators
                 .filter((op) => op !== "")
                 .map((op) => (
@@ -216,12 +216,12 @@ const Crossings: React.FC = () => {
           </Form.Group>
 
           <Form.Group controlId="tagProviderSelect" className="mb-3">
-            <Form.Label>Επιλογή Παρόχου Tag (TagOp)</Form.Label>
+            <Form.Label>Tag Operator</Form.Label>
             <Form.Select
               value={selectedTagOp}
               onChange={(e) => setSelectedTagOp(e.target.value)}
             >
-              <option value="">Όλες</option>
+              <option value="">All</option>
               {operators
                 .filter((op) => op !== "")
                 .map((op) => (
@@ -235,7 +235,7 @@ const Crossings: React.FC = () => {
       )}
 
       <Form.Group controlId="startDate" className="mb-3">
-        <Form.Label>Ημερομηνία Έναρξης (YYYYMMDD)</Form.Label>
+        <Form.Label>Start Date (YYYYMMDD)</Form.Label>
         <Form.Control
           type="text"
           value={startDate}
@@ -243,7 +243,7 @@ const Crossings: React.FC = () => {
         />
       </Form.Group>
       <Form.Group controlId="endDate" className="mb-3">
-        <Form.Label>Ημερομηνία Λήξης (YYYYMMDD)</Form.Label>
+        <Form.Label>End Date (YYYYMMDD)</Form.Label>
         <Form.Control
           type="text"
           value={endDate}
@@ -252,7 +252,7 @@ const Crossings: React.FC = () => {
       </Form.Group>
 
       <Button onClick={fetchCrossings} variant="primary" className="mb-3">
-        Εφαρμογή Φίλτρων
+        Apply Filters
       </Button>
 
       {error && <p className="text-danger">{error}</p>}
@@ -260,11 +260,11 @@ const Crossings: React.FC = () => {
       <Table striped bordered hover>
         <thead>
           <tr>
-            <th>Σταθμός</th>
-            <th>Ημερομηνία</th>
-            <th>Τοποθεσία</th>
-            <th>Πάροχος Tag</th>
-            <th>Κόστος</th>
+            <th>Station</th>
+            <th>Date</th>
+            <th>Location</th>
+            <th>Provider</th>
+            <th>Cost</th>
           </tr>
         </thead>
         <tbody>
@@ -281,14 +281,14 @@ const Crossings: React.FC = () => {
           ) : (
             <tr>
               <td colSpan={5} className="text-center">
-                Δεν υπάρχουν διελεύσεις για τα επιλεγμένα φίλτρα.
+                No crossings found for the selected filters.
               </td>
             </tr>
           )}
         </tbody>
       </Table>
 
-      {loading && <p>Φόρτωση...</p>}
+      {loading && <p>Loading data...</p>}
     </Container>
   );
 };

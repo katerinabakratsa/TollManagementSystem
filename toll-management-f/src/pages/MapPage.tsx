@@ -74,8 +74,6 @@ const MapPage: React.FC = () => {
               <br />
               Operator: {station.Operator}
               <br />
-              Status: {station.Status}
-              <br />
               Latitude: {station.Latitude}
               <br />
               Longitude: {station.Longitude}

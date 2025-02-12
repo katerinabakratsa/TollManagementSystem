@@ -182,7 +182,7 @@ const UsersDashboard: React.FC = () => {
   // ----------------------------------------------------------
   const chartOptions: Highcharts.Options = {
     chart: { type: chartType },
-    title: { text: "Διελεύσεις ανά Σταθμό" },
+    title: { text: "Crossings per Station" },
     tooltip: {
       pointFormat: "{series.name}: <b>{point.y}</b>",
     },
@@ -197,10 +197,10 @@ const UsersDashboard: React.FC = () => {
       },
     },
     xAxis: { categories: filteredChartData.map((data) => data.name) },
-    yAxis: { title: { text: "Διελεύσεις" } },
+    yAxis: { title: { text: "Crossings" } },
     series: [
       {
-        name: "Διελεύσεις",
+        name: "Crossings",
         data: filteredChartData.map((d) => ({
           name: d.name, // ✅ Χρησιμοποιούμε το όνομα του σταθμού
           y: d.y,
@@ -219,7 +219,7 @@ const UsersDashboard: React.FC = () => {
       {/* ---------- Δεν δείχνουμε operator dropdown ---------- */}
       <Row className="mt-4 justify-content-between">
         <Col md={4}>
-          <h5>Ημερομηνία Έναρξης</h5>
+          <h5>Start Date</h5>
           <DatePicker
             selected={startDate}
             onChange={(date) => setStartDate(date)}
@@ -227,7 +227,7 @@ const UsersDashboard: React.FC = () => {
           />
         </Col>
         <Col md={4}>
-          <h5>Ημερομηνία Λήξης</h5>
+          <h5>End Date</h5>
           <DatePicker
             selected={endDate}
             onChange={(date) => setEndDate(date)}
@@ -237,44 +237,44 @@ const UsersDashboard: React.FC = () => {
       </Row>
 
       <Button variant="success" className="mt-3 apply-filters-button" onClick={fetchData}>
-        Εφαρμογή Φίλτρων
+        Apply Filters
       </Button>
 
       <Row className="mt-4 justify-content-center">
         <Col md={4}>
           <Card className="dashboard-summary-card">
-            <h5>Σύνολο Σταθμών (της εταιρείας σου)</h5>
+            <h5>Total Stations</h5>
             <h2>{filteredTotalStations}</h2>
           </Card>
         </Col>
         <Col md={4}>
           <Card className="dashboard-summary-card">
-            <h5>Σταθμοί με Διελεύσεις</h5>
+            <h5>Stations with Crossings</h5>
             <h2>{filteredStationsWithPasses}</h2>
           </Card>
         </Col>
         <Col md={4}>
           <Card className="dashboard-summary-card">
-            <h5>Σύνολο Διελεύσεων</h5>
+            <h5>Total Crossings</h5>
             <h2>{filteredPasses}</h2>
           </Card>
         </Col>
       </Row>
 
       <div className="mt-4">
-        <h5>Τύπος Γραφήματος</h5>
+        <h5>Chart Type</h5>
         <Button
           variant={chartType === "column" ? "primary" : "outline-primary"}
           onClick={() => setChartType("column")}
           className="me-2"
         >
-          Διάγραμμα Στηλών
+           Column Chart
         </Button>
         <Button
           variant={chartType === "pie" ? "primary" : "outline-secondary"}
           onClick={() => setChartType("pie")}
         >
-          Διάγραμμα Πίτας
+          Pie Chart
         </Button>
       </div>
 

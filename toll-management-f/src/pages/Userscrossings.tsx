@@ -181,16 +181,14 @@ const UserCrossings: React.FC = () => {
   // ----------------------------------------------------------
   return (
     <Container className="mt-5">
-      <h1 className="text-center">Οι Διελεύσεις μου</h1>
-      <p>
-        Εμφάνιση διελεύσεων για Station Operator: <strong>{userOpID}</strong> (μόνο εσύ)
-      </p>
+      <h1 className="text-center">My Crossings</h1>
+      
 
       {error && <p className="text-danger">{error}</p>}
 
       {/* Φίλτρα: Ημερομηνίες */}
       <Form.Group className="mb-3" controlId="startDate">
-        <Form.Label>Ημερομηνία Έναρξης (YYYYMMDD)</Form.Label>
+        <Form.Label>Start Date (YYYYMMDD)</Form.Label>
         <Form.Control
           type="text"
           value={startDate}
@@ -198,7 +196,7 @@ const UserCrossings: React.FC = () => {
         />
       </Form.Group>
       <Form.Group className="mb-3" controlId="endDate">
-        <Form.Label>Ημερομηνία Λήξης (YYYYMMDD)</Form.Label>
+        <Form.Label>End Date (YYYYMMDD)</Form.Label>
         <Form.Control
           type="text"
           value={endDate}
@@ -208,35 +206,35 @@ const UserCrossings: React.FC = () => {
 
       {/* Φίλτρο Tag Operator */}
       <Form.Group className="mb-3" controlId="tagOpSelect">
-        <Form.Label>Tag Operator (Πάροχος)</Form.Label>
+        <Form.Label>Tag Operator (Provider)</Form.Label>
         <Form.Select
           value={selectedTagOp}
           onChange={(e) => setSelectedTagOp(e.target.value)}
         >
-          <option value="">Όλες</option>
+          <option value="">All</option>
           {operators
             .filter((op) => op !== "") // αφαιρούμε το "" το οποίο σημαίνει «Όλες»
             .map((op) => (
               <option key={op} value={op}>
-                {op === userOpID ? `${op} (εγώ)` : op}
+                {op === userOpID ? `${op} (me)` : op}
               </option>
             ))}
         </Form.Select>
       </Form.Group>
 
       <Button variant="primary" className="mb-3" onClick={fetchCrossingsData}>
-        Εφαρμογή Φίλτρων
+        Apply Filters
       </Button>
 
       {/* Πίνακας Διελεύσεων */}
       <Table striped bordered hover>
         <thead>
           <tr>
-            <th>Σταθμός</th>
-            <th>Ημερομηνία</th>
-            <th>Τοποθεσία</th>
-            <th>Πάροχος</th>
-            <th>Κόστος</th>
+            <th>Station</th>
+            <th>Date</th>
+            <th>Location</th>
+            <th>Provider</th>
+            <th>Cost</th>
           </tr>
         </thead>
         <tbody>
@@ -253,13 +251,13 @@ const UserCrossings: React.FC = () => {
           ) : (
             <tr>
               <td colSpan={5} className="text-center">
-                Δεν υπάρχουν διελεύσεις για τα επιλεγμένα φίλτρα.
+                No crossings found for the selected filters.
               </td>
             </tr>
           )}
         </tbody>
       </Table>
-      {loading && <p>Φόρτωση δεδομένων...</p>}
+      {loading && <p>Loading data...</p>}
     </Container>
   );
 };

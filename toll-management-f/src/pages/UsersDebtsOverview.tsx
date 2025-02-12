@@ -155,18 +155,18 @@ const UsersDebtsOverview: React.FC = () => {
   // -------------------------------------------------
   return (
     <div className="container mt-5">
-      <h1 className="mb-4">Debts Overview (User)</h1>
+      <h1 className="mb-4">Debts Overview</h1>
       {error && <p className="text-danger">{error}</p>}
 
       {/* Φίλτρα */}
       <div className="mb-4">
         <Form.Group controlId="companySelect" className="mb-3">
-          <Form.Label>Εταιρεία που Χρωστάει</Form.Label>
+          <Form.Label>Company in Debt</Form.Label>
           <Form.Select
             value={selectedCompany}
             onChange={(e) => setSelectedCompany(e.target.value)}
           >
-            <option value="">Όλες</option>
+            <option value="">All</option>
             {filteredCompanies.map((company) => (
               <option key={company} value={String(company)}>
                 {String(company)}
@@ -176,12 +176,12 @@ const UsersDebtsOverview: React.FC = () => {
         </Form.Group>
 
         <Form.Group controlId="creditorSelect" className="mb-3">
-          <Form.Label>Πιστώτρια Εταιρεία</Form.Label>
+          <Form.Label>Creditor Company</Form.Label>
           <Form.Select
             value={selectedCreditor}
             onChange={(e) => setSelectedCreditor(e.target.value)}
           >
-            <option value="">Όλες</option>
+            <option value="">All</option>
             {filteredCreditors.map((creditor) => (
               <option key={creditor} value={String(creditor)}>
                 {String(creditor)}
@@ -191,19 +191,19 @@ const UsersDebtsOverview: React.FC = () => {
         </Form.Group>
 
         <Form.Group controlId="statusSelect" className="mb-3">
-          <Form.Label>Κατάσταση Οφειλής</Form.Label>
+          <Form.Label>Debt Status</Form.Label>
           <Form.Select
             value={selectedStatus}
             onChange={(e) => setSelectedStatus(e.target.value)}
           >
-            <option value="">Όλα</option>
-            <option value="true">Εξοφλήθηκε</option>
-            <option value="false">Εκκρεμεί</option>
+            <option value="">All</option>
+            <option value="true">Paid</option>
+            <option value="false">Pending</option>
           </Form.Select>
         </Form.Group>
 
         <Form.Group controlId="startDate" className="mb-3">
-          <Form.Label>Ημερομηνία Έναρξης</Form.Label>
+          <Form.Label>Start Date</Form.Label>
           <Form.Control
             type="date"
             value={startDate}
@@ -212,7 +212,7 @@ const UsersDebtsOverview: React.FC = () => {
         </Form.Group>
 
         <Form.Group controlId="endDate" className="mb-3">
-          <Form.Label>Ημερομηνία Λήξης</Form.Label>
+          <Form.Label>End Date</Form.Label>
           <Form.Control
             type="date"
             value={endDate}
@@ -221,7 +221,7 @@ const UsersDebtsOverview: React.FC = () => {
         </Form.Group>
 
         <Button onClick={fetchDebts} variant="primary">
-          Εφαρμογή Φίλτρων
+          Apply Filters
         </Button>
       </div>
 
@@ -232,11 +232,11 @@ const UsersDebtsOverview: React.FC = () => {
         <Table striped bordered hover responsive>
           <thead>
             <tr>
-              <th>Ημερομηνία</th>
-              <th>Εταιρεία που Χρωστάει</th>
-              <th>Πιστώτρια Εταιρεία</th>
-              <th>Ποσό (€)</th>
-              <th>Κατάσταση</th>
+            <th>Date</th>
+            <th>Company in Debt</th>
+            <th>Creditor Company</th>
+            <th>Amount (€)</th>
+            <th>Status</th>
             </tr>
           </thead>
           <tbody>
@@ -252,7 +252,7 @@ const UsersDebtsOverview: React.FC = () => {
                 </td>
                 <td>
                   {debt.is_paid ? (
-                    <span className="text-success">Εξοφλήθηκε</span>
+                    <span className="text-success">Paid</span>
                   ) : debt.can_pay ? (
                     // Κουμπί πληρωμής ΜΟΝΟ αν can_pay === true
                     <Button
@@ -262,10 +262,10 @@ const UsersDebtsOverview: React.FC = () => {
                         setShowModal(true);
                       }}
                     >
-                      Πληρωμή
+                      Pay
                     </Button>
                   ) : (
-                    <span className="text-danger">Εκκρεμεί</span>
+                    <span className="text-danger">Pending</span>
                   )}
                 </td>
               </tr>
@@ -277,17 +277,17 @@ const UsersDebtsOverview: React.FC = () => {
       {/* Modal Επιβεβαίωσης Πληρωμής */}
       <Modal show={showModal} onHide={() => setShowModal(false)}>
         <Modal.Header closeButton>
-          <Modal.Title>Επιβεβαίωση Πληρωμής</Modal.Title>
+          <Modal.Title>Payment Confirmation</Modal.Title>
         </Modal.Header>
         <Modal.Body>
-          Είστε σίγουροι ότι θέλετε να εξοφλήσετε αυτή την οφειλή;
+          Are you sure you want to pay this debt?
         </Modal.Body>
         <Modal.Footer>
           <Button variant="secondary" onClick={() => setShowModal(false)}>
-            Ακύρωση
+            Cancel
           </Button>
           <Button variant="primary" onClick={handlePayDebt}>
-            Ναι, Πληρωμή
+            Yes, Pay
           </Button>
         </Modal.Footer>
       </Modal>

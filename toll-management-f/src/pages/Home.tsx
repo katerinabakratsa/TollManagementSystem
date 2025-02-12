@@ -52,10 +52,10 @@ const Home: React.FC = () => {
       
 
     const menuItems = [
-        { title: "Διελεύσεις", description: "Σελίδα με τα δεδομένα διελεύσεων.", icon: <FaRoad />, path: crossingsPath },
-        { title: "Προβολή Οφειλών", description: "Σελίδα με τις οικονομικές συναλλαγές και τα χρέη/οφειλές.", icon: <FaMoneyBill />, path: debtsPath },
-        { title: "Ανάλυση Δεδομένων", description: "Ενότητα με γραφήματα και στατιστικά δεδομένα.", icon: <FaChartBar />, path: dashboardPath },
-        { title: "Ιστορικό", description: "Πρόσβαση σε παλαιότερες εγγραφές διελεύσεων και συναλλαγών.", icon: <FaHistory />, path: "/history" },
+        { title: "Crossings", description: "View toll crossings filtered by company-operated stations", icon: <FaRoad />, path: crossingsPath },
+        { title: "Debts Overview", description: "View financial transactions and process payments", icon: <FaMoneyBill />, path: debtsPath },
+        { title: "Data Analysis", description: "Explore visual charts and reports for toll crossings", icon: <FaChartBar />, path: dashboardPath },
+        { title: "History", description: "Review details of fully paid transactions", icon: <FaHistory />, path: "/history" },
      ];
 
     return (
@@ -91,7 +91,7 @@ const Home: React.FC = () => {
             <div className="map-button-container">
                 <Link to="/map">
                     <Button className="map-button">
-                        <FaGlobe /> Πλήρης Χάρτης
+                        <FaGlobe /> Full Map
                     </Button>
                 </Link>
             </div>

@@ -136,15 +136,15 @@ const Dashboard: React.FC = () => {
     chart: { type: chartType },
     title: { text: "" },
     xAxis: { categories: filteredChartData.map(data => data.name) },
-    yAxis: { title: { text: "Διελεύσεις" } },
-    series: [{ name: "Διελεύσεις", data: filteredChartData }],
+    yAxis: { title: { text: "Crossings" } },
+    series: [{ name: "Crossings", data: filteredChartData }],
   };
 
   return (
     <Container className="mt-5 text-center dashboard-container">
       <Row className="mt-4 justify-content-center">
         <Col md={4}>
-          <h5>Επιλογή Εταιρείας Διοδίων</h5>
+          <h5>Choose Toll Operator</h5>
           <Form.Select value={selectedOperator} onChange={(e) => setSelectedOperator(e.target.value)}>
             {operators.map((op) => (
               <option key={op} value={op}>{op}</option>
@@ -155,47 +155,47 @@ const Dashboard: React.FC = () => {
 
       <Row className="mt-4 justify-content-between">
         <Col md={4}>
-          <h5>Ημερομηνία Έναρξης</h5>
+          <h5>Start Date</h5>
           <DatePicker selected={startDate} onChange={(date) => setStartDate(date)} dateFormat="yyyy-MM-dd" />
         </Col>
         <Col md={4}>
-          <h5>Ημερομηνία Λήξης</h5>
+          <h5>End Date</h5>
           <DatePicker selected={endDate} onChange={(date) => setEndDate(date)} dateFormat="yyyy-MM-dd" />
         </Col>
       </Row>
 
       <Button variant="success" className="mt-3 apply-filters-button" onClick={fetchData}>
-        Εφαρμογή Φίλτρων
+        Apply Filters
       </Button>
 
       <Row className="mt-4 justify-content-center">
         <Col md={4}>
           <Card className="dashboard-summary-card">
-            <h5>Σύνολο Σταθμών</h5>
+            <h5>Total Stations</h5>
             <h2>{filteredTotalStations}</h2> {/* Μόνο όταν πατιέται το κουμπί */}
           </Card>
         </Col>
         <Col md={4}>
           <Card className="dashboard-summary-card">
-            <h5>Σταθμοί με Διελεύσεις</h5>
+            <h5>Stations with Crossings</h5>
             <h2>{filteredStationsWithPasses}</h2>
           </Card>
         </Col>
         <Col md={4}>
           <Card className="dashboard-summary-card">
-            <h5>Σύνολο Διελεύσεων</h5>
+            <h5>Total Crossings</h5>
             <h2>{filteredPasses}</h2>
           </Card>
         </Col>
       </Row>
 
       <div className="mt-4">
-        <h5>Τύπος Γραφήματος</h5>
+        <h5>Chart Type</h5>
         <Button variant={chartType === "column" ? "primary" : "outline-primary"} onClick={() => setChartType("column")} className="me-2">
-          Διάγραμμα Στηλών
+          Column Chart
         </Button>
         <Button variant={chartType === "pie" ? "primary" : "outline-secondary"} onClick={() => setChartType("pie")}>
-          Διάγραμμα Πίτας
+          Pie Chart
         </Button>
       </div>
 
