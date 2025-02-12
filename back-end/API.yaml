@@ -67,13 +67,15 @@ paths:
           required: true
           schema:
             type: string
-            format: date
+            pattern: '^\d{8}$'
+            example: "20240101"
         - name: to_date
           in: path
           required: true
           schema:
             type: string
-            format: date
+            pattern: '^\d{8}$'
+            example: "20240101"
       responses:
         "200":
           description: Επιτυχής ανάκτηση διελεύσεων
@@ -127,13 +129,15 @@ paths:
           required: true
           schema:
             type: string
-            format: date
+            pattern: '^\d{8}$'
+            example: "20240101"
         - name: to_date
           in: path
           required: true
           schema:
             type: string
-            format: date
+            pattern: '^\d{8}$'
+            example: "20240101"
       responses:
         "200":
           description: Επιτυχής επιστροφή κόστους διελεύσεων
@@ -188,6 +192,14 @@ paths:
       responses:
         "200":
           description: Επιτυχής διαγραφή διελεύσεων
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: "OK"
         "401":
           description: Μη έγκυρο authentication token
 
