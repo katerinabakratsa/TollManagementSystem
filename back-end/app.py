@@ -440,15 +440,7 @@ def pass_analysis(stationOpID, tagOpID, from_date, to_date):
     cursor = None
     
     try:
-        
-        token = request.headers.get("X-OBSERVATORY-AUTH")
-        if not token or token not in tokens:
-            return jsonify({"status": "failed", "info": "Invalid or missing token"}), 401
-
-        username = tokens[token]  # ✅ username == OpID για μη-admin χρήστες
-
-        if username != "admin" and username != stationOpID:
-            return jsonify({"status": "failed", "info": "Permission denied"}), 403  # 🚨 Προστασία δεδομένων
+    
 
         # 1. Έλεγχος μορφής ημερομηνιών (YYYYMMDD)
         if not (len(from_date) == 8 and len(to_date) == 8 and from_date.isdigit() and to_date.isdigit()):
