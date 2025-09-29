@@ -85,10 +85,10 @@ python cli.py tollstationpasses --station NAO01 --from 20240101 --to 20240131
 
 ---
 ## TEAM MEMBERS
-- Antonis Adamidis
+- Fany Kalogianni https://l.messenger.com/l.php?u=https%3A%2F%2Fgithub.com%2Ffanykl&h=AT2iSs6mNa0mKW214yzZZ1aJPA7Lcowf5WqEHTG0Ms1OhzF-hipnkG8uM1MACgIdWWkV3jgaBz_ajjP63wXdA3qzwu7EhtOdYDDGWMXzL6m0CX-WW-yXDHv5aCJ_QKs-v97z_JbtagkJrW3jOPuDXA
+- Alexandra Moraitaki https://l.messenger.com/l.php?u=https%3A%2F%2Fgithub.com%2Falexandramoraitaki&h=AT2iSs6mNa0mKW214yzZZ1aJPA7Lcowf5WqEHTG0Ms1OhzF-hipnkG8uM1MACgIdWWkV3jgaBz_ajjP63wXdA3qzwu7EhtOdYDDGWMXzL6m0CX-WW-yXDHv5aCJ_QKs-v97z_JbtagkJrW3jOPuDXA
+- Thanasis Tsiatouras https://l.messenger.com/l.php?u=https%3A%2F%2Fgithub.com%2FThanasis-Tsiatouras&h=AT2iSs6mNa0mKW214yzZZ1aJPA7Lcowf5WqEHTG0Ms1OhzF-hipnkG8uM1MACgIdWWkV3jgaBz_ajjP63wXdA3qzwu7EhtOdYDDGWMXzL6m0CX-WW-yXDHv5aCJ_QKs-v97z_JbtagkJrW3jOPuDXA
 - Katerina Bakratsa
-- Fany Kalogianni
-- Alexandra Moraitaki
-- Thanasis Tsiatouras
+- Antonis Adamidis
 
 ---
